@@ -14,7 +14,7 @@ export const MAJELIS_HEADER_MAP = { "Nomor Rayon": "noRayon", "Nama Lengkap": "n
 export const FORM_MAJELIS = [
   {t: 'Profil Dasar', f: [
     {l:'Nomor Rayon', k:'noRayon', t:'sel', opts:['1','2','3','4','5','6','7','8','9','10']}, {l:'Nama Lengkap', k:'namaLengkap', req:true}, {l:'Nama Panggilan', k:'namaPanggilan'}, {l:'Tempat Lahir', k:'tempatLahir'}, {l:'Tanggal Lahir', k:'tanggalLahir', t:'date'}, {l:'Jenis Kelamin', k:'jk', t:'sel', opts:['Laki-laki', 'Perempuan']},
-    {l:'Status Menikah', k:'statusMenikah', t:'chk', span:2, opts:['Menikah/Nikah Adat', 'Menikah/Nikah Masehi', 'Menikah/BS/Catatan Sipil']}, {l:'Pekerjaan', k:'pekerjaan', t:'sel', opts:PEKERJAAN_LIST}, {l:'Jabatan Masy', k:'jabatanMasyarakat'}, {l:'Jabatan Pelayanan', k:'jabatanPelayanan', t:'sel', opts:['Penatua', 'Diaken', 'Pengajar', 'Koster']}, {l:'Jumlah Sdr', k:'jumlahSaudara', t:'num'}, {l:'Anak Ke-', k:'anakKe', t:'num'}, {l:'Gol Darah', k:'goldar', t:'sel', opts:['A', 'B', 'AB', 'O', 'Tidak Tahu']}
+    {l:'Status Menikah', k:'statusMenikah', t:'chk', span:2, opts:['Menikah/Nikah Adat', 'Menikah/Nikah Masehi', 'Menikah/BS/Catatan Sipil', 'Pasangan belum menikah']}, {l:'Pekerjaan', k:'pekerjaan', t:'sel', opts:PEKERJAAN_LIST},
   ]},
   {t: 'Riwayat Agama', f: [
     {l:'Gereja Baptis', k:'gerejaBaptis'}, {l:'Tgl Baptis', k:'tanggalBaptis', t:'date'}, {l:'Gereja Sidi', k:'gerejaSidi'}, {l:'Tgl Sidi', k:'tanggalSidi', t:'date'}, {l:'Gereja Nikah', k:'gerejaNikah'}, {l:'Tgl Nikah', k:'tanggalNikah', t:'date'}

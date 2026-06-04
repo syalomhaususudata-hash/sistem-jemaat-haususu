@@ -143,6 +143,7 @@ function InfografisTab({ data, filterRayon, type }) {
       if (key) { if (!acc[key]) acc[key] = []; acc[key].push(obj); }
       return acc;
   }, {});
+  
   Object.values(groupedByKk).forEach(anggotaKk => {
       const kk = anggotaKk.find(a => a.statusKeluarga === 'Kepala Keluarga');
       const istri = anggotaKk.find(a => a.statusKeluarga === 'Istri');
@@ -153,6 +154,12 @@ function InfografisTab({ data, filterRayon, type }) {
           if (jenisNikah.includes('Nikah Catatan Sipil/BS')) nkS++;
       }
   });
+
+  const nkB = dAktif.filter(d => {
+      const jn = Array.isArray(d.jenisNikah) ? d.jenisNikah : [];
+      return jn.includes('Pasangan belum menikah');
+  }).length;
+
   return (
     <div className="p-4 animate-in fade-in duration-300">
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -164,10 +171,11 @@ function InfografisTab({ data, filterRayon, type }) {
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
             <h4 className="text-gray-800 font-black mb-5 border-b pb-2">Statistik Pasangan Menikah</h4>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl text-center"><p className="text-3xl font-black text-orange-600">{nkA}</p><p className="text-xs font-bold text-orange-800 mt-2 uppercase">Adat</p></div>
                <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl text-center"><p className="text-3xl font-black text-rose-600">{nkG}</p><p className="text-xs font-bold text-rose-800 mt-2 uppercase">Gereja/Masehi</p></div>
                <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl text-center"><p className="text-3xl font-black text-purple-600">{nkS}</p><p className="text-xs font-bold text-purple-800 mt-2 uppercase">Sipil / BS</p></div>
+               <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center"><p className="text-3xl font-black text-slate-600">{nkB}</p><p className="text-xs font-bold text-slate-800 mt-2 uppercase">Belum Menikah</p></div>
             </div>
          </div>
        </div>
@@ -597,6 +605,7 @@ export default function App() {
       if (activeSubTabStatus === 'Anggota Baptis') return [{l:'Nama Lengkap',k:'namaLengkap', fmt:v=><span className="font-bold text-teal-800">{v}</span>},{l:'L/P',k:'jk', fmt:lp},{l:'Tempat Lahir',k:'tempatLahir'},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Tanggal Baptis',k:'tanggalBaptis', fmt:toDisplayDate},{l:'Rayon',k:'noRayon', fmt:r}];
       if (activeSubTabStatus === 'Anggota Sidi') return [{l:'Nama Lengkap',k:'namaLengkap', fmt:v=><span className="font-bold text-emerald-800">{v}</span>},{l:'L/P',k:'jk', fmt:lp},{l:'Tempat Lahir',k:'tempatLahir'},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Tanggal Sidi',k:'tanggalSidi', fmt:toDisplayDate},{l:'Rayon',k:'noRayon', fmt:r}];
       if (activeSubTabStatus === 'Anggota Nikah') return [{l:'Nama Lengkap',k:'namaLengkap', fmt:v=><span className="font-bold text-purple-800">{v}</span>},{l:'L/P',k:'jk', fmt:lp},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Tanggal Nikah',k:'tanggalNikah', fmt:toDisplayDate},{l:'Status Nikah',k:'jenisNikah', fmt:v=>Array.isArray(v)?v.join(', '):v},{l:'Rayon',k:'noRayon', fmt:r}];
+      if (activeSubTabStatus === 'Pasangan Belum Menikah') return [{l:'Nama Lengkap',k:'namaLengkap', fmt:v=><span className="font-bold text-slate-700">{v}</span>},{l:'L/P',k:'jk', fmt:lp},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Rayon',k:'noRayon', fmt:r}];
       if (activeSubTabStatus === 'Ulang Tahun' || activeSubTabStatus === 'Pelayanan Kategori') return [{l:'Nama Lengkap',k:'namaLengkap', fmt: activeSubTabStatus === 'Ulang Tahun' ? v=><span className="font-black text-pink-700 flex items-center gap-2">{v} <Gift className="w-4 h-4 inline"/></span> : bld},{l:'L/P',k:'jk', fmt:lp},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Usia',k:'tanggalLahir', fmt:v=><span className="font-black text-teal-700 text-lg">{calculateAge(v)}</span>},{l:'Rayon',k:'noRayon', fmt:r}];
     }
     if (activeTab === 'Profil Majelis') return [{l:'Foto', k:'fotoBase64', fmt:v=>v?<img src={v} className="w-10 h-10 rounded-full object-cover shadow border border-gray-200" alt="foto"/>:<span className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-xs text-gray-400 border border-gray-200">?</span>}, {l:'Nama Lengkap', k:'namaLengkap', fmt:bld}, {l:'Rayon', k:'noRayon', fmt:r}, {l:'Jabatan', k:'jabatanPelayanan', fmt:v=><span className="text-purple-700 font-black">{v}</span>}, {l:'L/P', k:'jk', fmt:lp}, {l:'Pekerjaan', k:'pekerjaan'}];
@@ -618,6 +627,7 @@ export default function App() {
       else if (activeSubTabStatus === 'Anggota Baptis') d = jemaatData.filter(isActive).filter(x => x?.baptis === 'Ya');
       else if (activeSubTabStatus === 'Anggota Sidi') d = jemaatData.filter(isActive).filter(x => x?.sidi === 'Ya');
       else if (activeSubTabStatus === 'Anggota Nikah') d = jemaatData.filter(isActive).filter(x => x?.nikah === 'Ya');
+      else if (activeSubTabStatus === 'Pasangan Belum Menikah') d = jemaatData.filter(isActive).filter(x => (x.jenisNikah||[]).includes('Pasangan belum menikah'));
       else if (activeSubTabStatus === 'Pelayanan Kategori') d = jemaatData.filter(isActive).filter(x => isMatchKat(x, filterKategori));
       else if (activeSubTabStatus === 'Ulang Tahun') d = jemaatData.filter(isActive).filter(x => getMonthFromDate(x?.tanggalLahir) === parseInt(filterBulan));
     } 
@@ -798,7 +808,7 @@ export default function App() {
                     </div>
                     <div className="md:col-span-2 grid grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
                       <FormInput label="Sudah Nikah?" name="nikah" type="select" opts={['Ya','Belum']} value={formData.nikah} onChange={handleFormChange} /> <FormInput label="Gereja Nikah" name="gerejaNikah" dis={formData.nikah!=='Ya'} value={formData.gerejaNikah} onChange={handleFormChange} /> <FormInput label="Tgl Nikah" name="tanggalNikah" type="date" dis={formData.nikah!=='Ya'} value={formData.tanggalNikah} onChange={handleFormChange} /> <FormInput label="Pendeta Nikah" name="pendetaNikah" dis={formData.nikah!=='Ya'} value={formData.pendetaNikah} onChange={handleFormChange} />
-                      <FormInput label="Jenis Nikah" name="jenisNikah" isCheckboxGroup opts={['Nikah Adat', 'Nikah Gereja/Masehi', 'Nikah Catatan Sipil/BS']} dis={formData.nikah!=='Ya'} value={formData.jenisNikah} onCheckboxChange={handleCheckboxChange} span={4} />
+                      <FormInput label="Jenis Nikah" name="jenisNikah" isCheckboxGroup opts={['Nikah Adat', 'Nikah Gereja/Masehi', 'Nikah Catatan Sipil/BS', 'Pasangan belum menikah']} dis={formData.nikah!=='Ya'} value={formData.jenisNikah} onCheckboxChange={handleCheckboxChange} span={4} />
                     </div>
                     {JEMAAT_EDU.map(f => <FormInput key={f.name} {...f} value={formData[f.name]} onChange={handleFormChange} />)}
                     <h4 className="md:col-span-2 font-bold text-gray-800 border-b pb-2 mt-4 text-lg">Kesehatan & Status Sosial</h4>

@@ -33,7 +33,7 @@ export default function StatusJemaatTab({
               activeSubTabStatus === 'Ulang Tahun' ? 'border-pink-200 text-pink-700 focus:ring-pink-500' : 'border-indigo-200 text-indigo-700 focus:ring-indigo-500'
             }`}
           >
-            {['Pelayanan Kategori', 'Anggota Baptis', 'Anggota Sidi', 'Anggota Nikah', 'Pindah Masuk Jemaat', 'Pindah Jemaat', 'Data Kematian', 'Ulang Tahun'].map(sub => (
+            {['Pelayanan Kategori', 'Anggota Baptis', 'Anggota Sidi', 'Anggota Nikah', 'Pasangan Belum Menikah', 'Pindah Masuk Jemaat', 'Pindah Jemaat', 'Data Kematian', 'Ulang Tahun'].map(sub => (
               <option key={sub} value={sub}>{sub}</option>
             ))}
           </select>
