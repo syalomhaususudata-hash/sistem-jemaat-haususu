@@ -82,8 +82,8 @@ export default function PengaturanTab({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-200 mb-6">
         {rayonList.map(r => (
           <div key={r} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative">
-             {parseInt(r) > 6 && (
-                <button onClick={() => handleDeleteRayon(r)} className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 bg-red-50 rounded">
+             {parseInt(r) > 1 && (
+               <button onClick={() => handleDeleteRayon(r)} className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 bg-red-50 rounded">
                    <Trash2 className="w-4 h-4"/>
                 </button>
              )}

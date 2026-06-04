@@ -25,13 +25,14 @@ import PengaturanTab from './components/PengaturanTab';
 
 // --- FIREBASE INIT ---
 const inCanvas = typeof __firebase_config !== 'undefined' && __firebase_config;
-const firebaseConfig = inCanvas ? JSON.parse(__firebase_config) : {
-  apiKey: "AIzaSyCvRx0pr7bhrmUUjUk2u3vB6QhHd_c6Fhc",
-  authDomain: "data-jemaat-syalom.firebaseapp.com",
-  projectId: "data-jemaat-syalom",
-  storageBucket: "data-jemaat-syalom.firebasestorage.app",
-  messagingSenderId: "14205807426",
-  appId: "1:14205807426:web:9f10250e15926b4e97b6db"
+// Kode ini akan otomatis menyesuaikan diri tergantung di mana ia di-hosting (Vercel Koa, Vercel Haususu, dll)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
