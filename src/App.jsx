@@ -659,7 +659,19 @@ export default function App() {
   const auditData = useMemo(() => {
      const reqKk = ['noHp', 'bentukRumah', 'statusRumah', 'alamat'];
      const baseJemaat = ['nik', 'tempatLahir', 'tanggalLahir', 'goldar', 'sukuAyah', 'sukuIbu', 'pendidikan', 'pekerjaan', 'penghasilan', 'jandaDuda', 'yatimPiatu'];
-     const reqMajelis = ['tempatLahir', 'tanggalLahir', 'pekerjaan', 'jabatanMasyarakat', 'goldar', 'gerejaBaptis', 'tanggalBaptis'];
+     // --- KODE BARU UNTUK AUDIT MAJELIS ---
+     // Ganti const reqMajelis yang lama dengan yang di bawah ini:
+     // GANTI VARIABEL reqMajelis LAMA DENGAN INI:
+      const reqMajelis = [
+          'tempatLahir', 'tanggalLahir', 'goldar', 'anakKe', 'jumlahSaudara', 'jabatanMasyarakat', 'jabatanGereja',
+          'tempatNikah', 'tanggalNikah',
+          'namaSd', 'tahunMulaiSd', 'tahunTamatSd',
+          'namaSmp', 'tahunMulaiSmp', 'tahunTamatSmp',
+          'namaSma', 'tahunMulaiSma', 'tahunTamatSma',
+          'namaPt', 'jurusanPt', 'jenjangPt', 'tahunMasukPt', 'tahunTamatPt',
+          'namaLembagaKerja', 'jabatanKerja', 'tahunMulaiKerja', 'tahunSelesaiKerja',
+          'gerejaPelayananLama', 'jabatanPelayananLama', 'tahunMulaiPelayanan', 'tahunSelesaiPelayanan'
+      ];
      let kkCount = 0, anggotaCount = 0, majelisCount = 0; const currentList = [];
      const isMissing = (val) => !val || val === '-' || String(val).trim() === '';
 

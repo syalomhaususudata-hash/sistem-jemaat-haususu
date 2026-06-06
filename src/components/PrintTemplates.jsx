@@ -181,6 +181,62 @@ export function PrintMajelisTemplate({ majelisToPrint, majelisData, penatuaMap, 
           </table>
        </div>
        
+      {/* PASTIKAN ANDA MENEMPELKAN KODE MULAI DARI SINI */}
+       <div className="mb-6">
+          <h3 className="font-bold text-lg border-b border-black mb-2 uppercase bg-gray-100 print:bg-transparent print:text-black p-1">D. RIWAYAT PENDIDIKAN</h3>
+          <table className="w-full border-collapse border border-black text-xs text-center">
+             <thead className="bg-gray-100 print:bg-transparent print:text-black">
+               <tr>
+                   <th className={b}>Tingkat</th><th className={b}>Nama Institusi</th>
+                   <th className={b}>Jurusan / Jenjang</th><th className={b}>Tahun Mulai</th><th className={b}>Tahun Tamat</th>
+               </tr>
+             </thead>
+             <tbody>
+                <tr>
+                   <td className={`font-bold ${b}`}>SD</td><td className={`text-left ${b}`}>{safeStr(mj.namaSd)}</td>
+                   <td className={b}>-</td><td className={b}>{safeStr(mj.tahunMulaiSd)}</td><td className={b}>{safeStr(mj.tahunTamatSd)}</td>
+                </tr>
+                <tr>
+                   <td className={`font-bold ${b}`}>SMP</td><td className={`text-left ${b}`}>{safeStr(mj.namaSmp)}</td>
+                   <td className={b}>-</td><td className={b}>{safeStr(mj.tahunMulaiSmp)}</td><td className={b}>{safeStr(mj.tahunTamatSmp)}</td>
+                </tr>
+                <tr>
+                   <td className={`font-bold ${b}`}>SMA</td><td className={`text-left ${b}`}>{safeStr(mj.namaSma)}</td>
+                   <td className={b}>-</td><td className={b}>{safeStr(mj.tahunMulaiSma)}</td><td className={b}>{safeStr(mj.tahunTamatSma)}</td>
+                </tr>
+                <tr>
+                   <td className={`font-bold ${b}`}>PT</td><td className={`text-left ${b}`}>{safeStr(mj.namaPt)}</td>
+                   <td className={b}>{safeStr(mj.jurusanPt)} {mj.jenjangPt ? `(${safeStr(mj.jenjangPt)})` : ''}</td>
+                   <td className={b}>{safeStr(mj.tahunMasukPt)}</td><td className={b}>{safeStr(mj.tahunTamatPt)}</td>
+                </tr>
+             </tbody>
+          </table>
+       </div>
+
+       <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6 print:gap-4 print:grid-cols-2">
+          <div>
+              <h3 className="font-bold text-lg border-b border-black mb-2 uppercase bg-gray-100 print:bg-transparent print:text-black p-1">E. RIWAYAT PEKERJAAN</h3>
+              <table className="w-full text-sm">
+                 <tbody>
+                    <tr><td className="py-1 w-32 font-semibold align-top">Nama Lembaga</td><td className="align-top">: {safeStr(mj.namaLembagaKerja)}</td></tr>
+                    <tr><td className="py-1 font-semibold align-top">Jabatan</td><td className="align-top">: {safeStr(mj.jabatanKerja)}</td></tr>
+                    <tr><td className="py-1 font-semibold align-top">Periode</td><td className="align-top">: {mj.tahunMulaiKerja ? `${safeStr(mj.tahunMulaiKerja)} - ${safeStr(mj.tahunSelesaiKerja) || 'Sekarang'}` : '-'}</td></tr>
+                 </tbody>
+              </table>
+          </div>
+          <div>
+              <h3 className="font-bold text-lg border-b border-black mb-2 uppercase bg-gray-100 print:bg-transparent print:text-black p-1">F. RIWAYAT PELAYANAN</h3>
+              <table className="w-full text-sm">
+                 <tbody>
+                    <tr><td className="py-1 w-32 font-semibold align-top">Tempat Melayani</td><td className="align-top">: {safeStr(mj.gerejaPelayananLama)}</td></tr>
+                    <tr><td className="py-1 font-semibold align-top">Jabatan Lama</td><td className="align-top">: {safeStr(mj.jabatanPelayananLama)}</td></tr>
+                    <tr><td className="py-1 font-semibold align-top">Periode</td><td className="align-top">: {mj.tahunMulaiPelayanan ? `${safeStr(mj.tahunMulaiPelayanan)} - ${safeStr(mj.tahunSelesaiPelayanan) || 'Sekarang'}` : '-'}</td></tr>
+                 </tbody>
+              </table>
+          </div>
+       </div>
+       {/* SAMPAI SINI SAJA */}
+
        <div className="mt-10 text-right pr-8 text-sm">
           <p className="mb-16">Jemaat {churchProfile.mataJemaat || churchProfile.jemaat}, {getFormatDate()}</p>
           <p className="font-bold underline uppercase">{safeStr(mj.namaLengkap)}</p>
