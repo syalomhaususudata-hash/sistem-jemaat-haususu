@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Plus, ChevronDown, Download, FileUp, Trash2, Search, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { UserCheck, Plus, ChevronDown, Download, FileUp, Trash2, Search, ChevronLeft, ChevronRight, Users, Eye, Edit, Printer } from 'lucide-react';
 
 export default function ProfilMajelisTab({
   appUser, setFormData, setModalMode,
@@ -19,6 +19,7 @@ export default function ProfilMajelisTab({
   InfografisTab, majelisData
 }) {
    const [showMenuOps, setShowMenuOps] = useState(false);
+   const [expandedId, setExpandedId] = useState(null);
 
    return (
     <div className="animate-in fade-in duration-300">
@@ -55,7 +56,7 @@ export default function ProfilMajelisTab({
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setShowMenuOps(false)}></div>
                                     <div className="absolute left-0 lg:right-0 lg:left-auto mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <button onClick={() => { setShowMenuOps(false); handleExportCSV(); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left text-sm font-bold text-gray-700"><Download className="w-4 h-4 text-emerald-600"/> Download Excel</button>
+                                        <button onClick={() => { setShowMenuOps(false); handleExportCSV(); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left text-sm font-bold text-gray-700"><Download className="w-4 h-4 text-emerald-600"/> Download Excel Bawaan</button>
                                         <button onClick={() => { setShowMenuOps(false); fileInputRef.current.click(); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left text-sm font-bold text-gray-700"><FileUp className="w-4 h-4 text-amber-500"/> Import CSV</button>
                                         <div className="h-px bg-gray-100 w-full"></div>
                                         <button onClick={() => { setShowMenuOps(false); handleCleanAll('majelis'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-left text-sm font-bold text-red-600"><Trash2 className="w-4 h-4"/> Kosongkan Data</button>
@@ -69,13 +70,13 @@ export default function ProfilMajelisTab({
 
               {subTabMajelis !== 'Infografis' && (
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-                  <select value={filterRayon} onChange={(e) => setFilterRayon(e.target.value)} className="bg-blue-50 border-2 border-blue-200 text-blue-800 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
+                  <select value={filterRayon} onChange={(e) => setFilterRayon(e.target.value)} className="bg-purple-50 border-2 border-purple-200 text-purple-800 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
                     <option value="Semua">Semua Rayon</option>
                     {rayonList.map(i => <option key={i} value={i}>Rayon {i}</option>)}
                   </select>
                   <div className="relative w-full sm:w-auto flex-1">
                     <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full xl:w-60 pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-700" />
+                    <input type="text" placeholder="Cari majelis..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full xl:w-60 pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm font-bold text-gray-700" />
                   </div>
                   <select value={itemsPerPage} onChange={(e) => setItemsPerPage(e.target.value === 'Semua' ? 'Semua' : Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
                     <option value={5}>Tampil 5</option>
@@ -87,7 +88,6 @@ export default function ProfilMajelisTab({
               )}
             </div>
 
-            {/* AREA RENDER UTAMA */}
             <div className="p-0">
                 <div className="hidden print:block mb-4 border-b-2 border-black pb-4">
                    <h1 className="text-2xl font-bold uppercase text-center">Data {subTabMajelis}</h1>
@@ -100,40 +100,91 @@ export default function ProfilMajelisTab({
                       <InfografisTab data={majelisData} filterRayon={filterRayon} type="majelis" />
                    </div>
                 ) : (
-                   <div className="overflow-x-auto min-h-[50vh]">
-                      <table className="w-full text-left border-collapse min-w-max">
-                        <thead>
-                          <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider">
-                             <SortableHeader label="No" sortKey="no" sortConfig={sortConfig} requestSort={requestSort} className="w-12 text-center" />
-                             {tabCols.map(c => <SortableHeader key={c.l} label={c.l} sortKey={c.k} sortConfig={sortConfig} requestSort={requestSort} className={c.l==='Usia'?'text-center bg-pink-100 text-pink-800':''} />)}
-                             <th className="px-4 py-3 border-b w-40 text-center select-none sticky right-0 bg-gray-100 shadow">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                           {currentData.length === 0 ? (
-                              <tr><td colSpan="20" className="px-4 py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</td></tr>
-                           ) : (
-                              currentData.map((row, idx) => (
-                                 <BarisTabelJemaat
-                                    key={row.dbId||idx} row={row} idx={idx}
-                                    startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
-                                    tabCols={tabCols} activeTab="Profil Majelis"
-                                    appUser={appUser} 
-                                    isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))}
-                                    onAction={handleRowAction}
-                                />
-                              ))
-                           )}
-                        </tbody>
-                      </table>
-                   </div>
+                   <>
+                      <div className="hidden md:block overflow-x-auto min-h-[50vh]">
+                        <table className="w-full text-left border-collapse min-w-max">
+                          <thead>
+                            <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider">
+                               <SortableHeader label="No" sortKey="no" sortConfig={sortConfig} requestSort={requestSort} className="w-12 text-center" />
+                               {tabCols.map(c => <SortableHeader key={c.l} label={c.l} sortKey={c.k} sortConfig={sortConfig} requestSort={requestSort} className={c.l==='Usia'?'text-center bg-pink-100 text-pink-800':''} />)}
+                               <th className="px-4 py-3 border-b w-40 text-center select-none sticky right-0 bg-gray-100 shadow">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-sm">
+                             {currentData.length === 0 ? (
+                                <tr><td colSpan="20" className="px-4 py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</td></tr>
+                             ) : (
+                                currentData.map((row, idx) => (
+                                   <BarisTabelJemaat
+                                      key={row.dbId||idx} row={row} idx={idx}
+                                      startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
+                                      tabCols={tabCols} activeTab="Profil Majelis"
+                                      appUser={appUser} 
+                                      isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))}
+                                      onAction={handleRowAction}
+                                  />
+                                ))
+                             )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="md:hidden flex flex-col p-4 gap-3 bg-gray-50 min-h-[50vh]">
+                         {currentData.length === 0 ? (
+                            <div className="py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</div>
+                         ) : (
+                            currentData.map((row, idx) => (
+                               <div key={row.dbId||idx} className="bg-white border border-purple-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+                                  <div onClick={() => setExpandedId(prev => prev === row.dbId ? null : row.dbId)} className="p-4 flex items-center gap-4 cursor-pointer active:bg-purple-50">
+                                     <div className="flex flex-col items-center justify-center min-w-60px">
+                                        {row.fotoBase64 ? (
+                                           <img src={row.fotoBase64} alt="foto" className="w-14 h-14 rounded-full object-cover shadow-sm border-2 border-purple-100"/>
+                                        ) : (
+                                           <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 font-black text-xl shadow-sm border-2 border-purple-50">{row.namaLengkap ? row.namaLengkap.charAt(0).toUpperCase() : '?'}</div>
+                                        )}
+                                     </div>
+                                     
+                                     <div className="w-px h-10 border-l-2 border-dashed border-gray-300"></div>
+                                     
+                                     <div className="flex-1">
+                                        <h4 className="font-bold text-gray-800 text-sm">{row.namaLengkap}</h4>
+                                        <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mt-1">
+                                           {row.jabatanOrganisasiMajelis || row.jabatanGereja || row.jabatanPelayanan || '-'} &bull; Rayon {row.noRayon}
+                                        </p>
+                                     </div>
+                                     
+                                     <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandedId === row.dbId ? 'rotate-180 text-purple-500' : ''}`} />
+                                  </div>
+
+                                  {expandedId === row.dbId && (
+                                     <div className="bg-purple-50/50 border-t border-purple-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
+                                        {appUser?.role !== 'jemaat' ? (
+                                           <button onClick={() => handleRowAction('print_majelis', row)} className="flex-1 py-2.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Printer className="w-4 h-4"/> Cetak</button>
+                                        ) : (
+                                           <span className="flex-1 py-2.5 bg-gray-100 text-gray-500 rounded-xl text-xs font-bold flex items-center justify-center select-none">Hanya Lihat</span>
+                                        )}
+                                        
+                                        {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser?.name)) && (
+                                           <>
+                                              <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit</button>
+                                              {appUser?.role === 'admin' && (
+                                                 <button onClick={() => handleRowAction('delete', row)} className="flex-1 py-2.5 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Trash2 className="w-4 h-4"/> Hapus</button>
+                                              )}
+                                           </>
+                                        )}
+                                     </div>
+                                  )}
+                               </div>
+                            ))
+                         )}
+                      </div>
+                   </>
                 )}
             </div>
 
-            {/* PAGINASI */}
             {subTabMajelis !== 'Infografis' && (
               <div className="bg-gray-50 p-5 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden rounded-b-3xl">
-                 <p className="text-sm text-gray-500 font-bold">Menampilkan total: <span className="font-black text-blue-800 text-base">{totalItems}</span> Data</p>
+                 <p className="text-sm text-gray-500 font-bold">Menampilkan total: <span className="font-black text-purple-800 text-base">{totalItems}</span> Data</p>
                 {itemsPerPage !== 'Semua' && totalPages > 1 && (
                   <div className="flex items-center gap-3">
                     <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="p-2 rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-200 disabled:opacity-50 transition"><ChevronLeft className="w-5 h-5" /></button>

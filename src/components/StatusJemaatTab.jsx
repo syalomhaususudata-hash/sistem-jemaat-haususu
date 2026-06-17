@@ -1,28 +1,38 @@
-import React from 'react';
-import { ChevronDown, Plus, Printer, ChevronLeft, ChevronRight, Users, Filter } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Plus, Printer, ChevronLeft, ChevronRight, Users, Filter, Eye, RefreshCw, Trash2 } from 'lucide-react';
+import { calculateAge, toDisplayDate } from '../utils/helpers';
 
 export default function StatusJemaatTab({
-  // State & Setters
   activeSubTabStatus, setActiveSubTabStatus,
   appUser, setFormData, setModalMode, setPrintMode,
   filterKategori, setFilterKategori, KATEGORI_PELAYANAN,
   filterBulan, setFilterBulan, NAMA_BULAN,
   filterRayon, setFilterRayon, rayonList,
-  
-  // Data & Table
   currentData, tabCols, sortConfig, requestSort,
   itemsPerPage, setItemsPerPage,
   currentPage, totalPages, setCurrentPage, totalItems,
   churchProfile,
-  
-  // Components
   SortableHeader, BarisTabelJemaat, handleRowAction
 }) {
 
+  const [expandedId, setExpandedId] = useState(null);
+
+  const getCardSubtitle = (row) => {
+    if (activeSubTabStatus === 'Data Kematian') return `Wafat: ${toDisplayDate(row.tanggalKematian)}`;
+    if (activeSubTabStatus === 'Pindah Jemaat') return `Tujuan: ${row.pindahKeJemaat}`;
+    if (activeSubTabStatus === 'Pindah Masuk Jemaat') return `Dari: ${row.asalJemaat}`;
+    if (activeSubTabStatus === 'Anggota Baptis') return `Tgl Baptis: ${toDisplayDate(row.tanggalBaptis)}`;
+    if (activeSubTabStatus === 'Anggota Sidi') return `Tgl Sidi: ${toDisplayDate(row.tanggalSidi)}`;
+    if (activeSubTabStatus === 'Anggota Nikah') return `Tgl Nikah: ${toDisplayDate(row.tanggalNikah)}`;
+    if (activeSubTabStatus === 'Ulang Tahun') return `Tgl Lahir: ${toDisplayDate(row.tanggalLahir)} • Usia: ${calculateAge(row.tanggalLahir)} Thn`;
+    if (activeSubTabStatus === 'Pelayanan Kategori') return `Usia: ${calculateAge(row.tanggalLahir)} Thn`;
+    return `Tgl Lahir: ${toDisplayDate(row.tanggalLahir)}`;
+  };
+
+  const isActionableStatus = ['Data Kematian', 'Pindah Jemaat', 'Pindah Masuk Jemaat'].includes(activeSubTabStatus);
+
   return (
     <div className="animate-in fade-in duration-300">
-      
-      {/* 1. SUB MENU DROPDOWN */}
       <div className="mb-4 print:hidden">
         <label className="text-[10px] font-black text-gray-400 mb-1 block uppercase tracking-wider">Sub Menu Laporan Status</label>
         <div className="relative inline-block w-full sm:w-auto">
@@ -42,8 +52,6 @@ export default function StatusJemaatTab({
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden print:border-none print:shadow-none">
-        
-        {/* 2. TOP ACTION BAR (Tombol Lapor & Filter) */}
         <div className="p-6 border-b border-gray-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 print:hidden">
           
           <div className="flex flex-wrap items-center gap-3">
@@ -73,7 +81,6 @@ export default function StatusJemaatTab({
             )}
           </div>
 
-          {/* Filter Section */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
             {activeSubTabStatus === 'Pelayanan Kategori' && (
               <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="bg-indigo-50 border-2 border-indigo-200 text-indigo-800 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
@@ -99,7 +106,6 @@ export default function StatusJemaatTab({
           </div>
         </div>
 
-        {/* 3. BAGIAN TABEL */}
         <div className="p-0">
           <div className="hidden print:block mb-4 border-b-2 border-black pb-4">
              <h1 className="text-2xl font-bold uppercase text-center">Data {activeSubTabStatus}</h1>
@@ -111,7 +117,7 @@ export default function StatusJemaatTab({
              <p className="text-center font-medium text-sm">Jemaat {churchProfile?.jemaat}</p>
           </div>
 
-          <div className="overflow-x-auto min-h-[50vh]">
+          <div className="hidden md:block overflow-x-auto min-h-[50vh]">
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
                 <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider">
@@ -128,13 +134,9 @@ export default function StatusJemaatTab({
                  ) : (
                     currentData.map((row, idx) => (
                        <BarisTabelJemaat
-                          key={row.dbId||idx}
-                          row={row}
-                          idx={idx}
+                          key={row.dbId||idx} row={row} idx={idx}
                           startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
-                          tabCols={tabCols}
-                          activeTab="Status Jemaat"
-                          activeSubTabStatus={activeSubTabStatus}
+                          tabCols={tabCols} activeTab="Status Jemaat" activeSubTabStatus={activeSubTabStatus}
                           appUser={appUser}
                           isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser.name)}
                           onAction={handleRowAction}
@@ -144,9 +146,52 @@ export default function StatusJemaatTab({
               </tbody>
             </table>
           </div>
+
+          <div className="md:hidden flex flex-col p-4 gap-3 bg-gray-50 min-h-[50vh]">
+             {currentData.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</div>
+             ) : (
+                currentData.map((row, idx) => (
+                   <div key={row.dbId||idx} className="bg-white border border-indigo-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+                      <div onClick={() => isActionableStatus ? setExpandedId(prev => prev === row.dbId ? null : row.dbId) : null} className={`p-4 flex items-center gap-4 ${isActionableStatus ? 'cursor-pointer active:bg-indigo-50' : ''}`}>
+                         <div className="flex flex-col items-center justify-center min-w-50px">
+                            <span className="text-xl font-black text-indigo-600 leading-none">R-{row.noRayon}</span>
+                         </div>
+                         <div className="w-px h-10 border-l-2 border-dashed border-gray-300"></div>
+                         <div className="flex-1">
+                            <h4 className={`font-bold text-sm ${row.jk === 'Laki-laki' ? 'text-blue-800' : 'text-pink-800'}`}>{row.namaLengkap}</h4>
+                            <p className="text-[11px] font-bold text-gray-500 mt-1 uppercase tracking-wider">
+                               {getCardSubtitle(row)}
+                            </p>
+                         </div>
+                         {isActionableStatus && (
+                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandedId === row.dbId ? 'rotate-180 text-indigo-500' : ''}`} />
+                         )}
+                      </div>
+
+                      {(isActionableStatus && expandedId === row.dbId) && (
+                         <div className="bg-indigo-50/50 border-t border-indigo-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
+                            <button onClick={() => handleRowAction('view', row)} className="flex-1 py-2 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
+                               <Eye className="w-4 h-4"/> Detail
+                            </button>
+                            {(appUser?.role === 'admin' && activeSubTabStatus !== 'Pindah Masuk Jemaat') && (
+                               <button onClick={() => handleRowAction('restore', row)} className="flex-1 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
+                                  <RefreshCw className="w-4 h-4"/> Tarik Data
+                               </button>
+                            )}
+                            {appUser?.role === 'admin' && (
+                               <button onClick={() => handleRowAction('delete', row)} className="flex-1 py-2 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
+                                  <Trash2 className="w-4 h-4"/> Hapus
+                               </button>
+                            )}
+                         </div>
+                      )}
+                   </div>
+                ))
+             )}
+          </div>
         </div>
 
-        {/* 4. PAGINASI BAWAH */}
         <div className="bg-gray-50 p-5 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden rounded-b-3xl">
            <p className="text-sm text-gray-500 font-bold">Menampilkan total: <span className="font-black text-blue-800 text-base">{totalItems}</span> Data</p>
           {itemsPerPage !== 'Semua' && totalPages > 1 && (
@@ -161,7 +206,6 @@ export default function StatusJemaatTab({
            </div>
           )}
         </div>
-
       </div>
     </div>
   );

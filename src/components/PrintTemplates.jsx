@@ -139,7 +139,7 @@ export function PrintMajelisTemplate({ majelisToPrint, majelisData, penatuaMap, 
                 <tbody>
                    <tr><td className="py-1 w-40 font-semibold">Nama Lengkap</td><td>: {safeStr(mj.namaLengkap)}</td></tr>
                    <tr><td className="py-1 font-semibold">Nama Panggilan</td><td>: {safeStr(mj.namaPanggilan)}</td></tr>
-                   <tr><td className="py-1 font-semibold">Jabatan Pelayanan</td><td>: <span className="font-bold">{safeStr(mj.jabatanPelayanan)}</span></td></tr>
+                   <tr><td className="py-1 font-semibold">Jabatan Organisasi</td><td>: <span className="font-bold">{safeStr(mj.jabatanOrganisasiMajelis || mj.jabatanPelayanan)}</span></td></tr>
                    <tr><td className="py-1 font-semibold">Tempat, Tgl Lahir</td><td>: {safeStr(mj.tempatLahir)}, {toDisplayDate(mj.tanggalLahir)}</td></tr>
                    <tr><td className="py-1 font-semibold">Jenis Kelamin</td><td>: {safeStr(mj.jk)}</td></tr>
                    <tr><td className="py-1 font-semibold">Golongan Darah</td><td>: {safeStr(mj.goldar)}</td></tr>
@@ -181,7 +181,6 @@ export function PrintMajelisTemplate({ majelisToPrint, majelisData, penatuaMap, 
           </table>
        </div>
        
-      {/* PASTIKAN ANDA MENEMPELKAN KODE MULAI DARI SINI */}
        <div className="mb-6">
           <h3 className="font-bold text-lg border-b border-black mb-2 uppercase bg-gray-100 print:bg-transparent print:text-black p-1">D. RIWAYAT PENDIDIKAN</h3>
           <table className="w-full border-collapse border border-black text-xs text-center">
@@ -235,7 +234,6 @@ export function PrintMajelisTemplate({ majelisToPrint, majelisData, penatuaMap, 
               </table>
           </div>
        </div>
-       {/* SAMPAI SINI SAJA */}
 
        <div className="mt-10 text-right pr-8 text-sm">
           <p className="mb-16">Jemaat {churchProfile.mataJemaat || churchProfile.jemaat}, {getFormatDate()}</p>
@@ -255,6 +253,25 @@ export function PrintListTemplate({ listToPrint, tabCols, filteredData, filterRa
   if (!listToPrint) return null;
   const b = "border border-black p-1";
   
+  // Mengurutkan Data Khusus untuk Cetak "Ulang Tahun" 
+  // Urutan pertama: Tanggal Harinya (Tgl 1, lalu Tgl 2, dst)
+  // Urutan kedua: Tahun lahir (Termuda ke Tertua)
+  const displayData = [...(filteredData || [])];
+  if (listToPrint === 'Ulang Tahun') {
+     displayData.sort((a, b) => {
+        const dayA = a.tanggalLahir ? parseInt(a.tanggalLahir.split('-')[2] || 0) : 0;
+        const dayB = b.tanggalLahir ? parseInt(b.tanggalLahir.split('-')[2] || 0) : 0;
+        
+        // 1. Urutkan berdasarkan Hari (dari tanggal 1 ke 31)
+        if (dayA !== dayB) return dayA - dayB;
+        
+        // 2. Jika hari ulang tahunnya sama, urutkan dari Termuda ke Tertua
+        const strA = a.tanggalLahir || '1900-01-01';
+        const strB = b.tanggalLahir || '1900-01-01';
+        return strB.localeCompare(strA); 
+     });
+  }
+
   return (
     <div className="block w-full bg-white text-black p-4 md:p-8 text-sm font-sans max-w-4xl mx-auto border shadow-lg print:border-none print:shadow-none print:m-0 print:p-0">
        <style type="text/css">{"@page { size: A4 portrait; margin: 10mm; }"}</style>
@@ -289,13 +306,13 @@ export function PrintListTemplate({ listToPrint, tabCols, filteredData, filterRa
              </tr>
           </thead>
           <tbody>
-             {(filteredData||[]).map((row, i) => (
+             {displayData.map((row, i) => (
                 <tr key={i}>
                    <td className={b}>{i+1}</td>
                    {tabCols.map((c, j) => <td key={j} className={b}>{c.fmt ? c.fmt(row[c.k], row) : safeStr(row[c.k])}</td>)}
                 </tr>
              ))}
-             {(!filteredData || filteredData.length === 0) && (<tr><td colSpan={tabCols.length+1} className="border border-black p-2 italic text-gray-500">Tidak ada data.</td></tr>)}
+             {displayData.length === 0 && (<tr><td colSpan={tabCols.length+1} className="border border-black p-2 italic text-gray-500">Tidak ada data.</td></tr>)}
           </tbody>
        </table>
        
@@ -315,8 +332,6 @@ export function PrintListTemplate({ listToPrint, tabCols, filteredData, filterRa
     </div>
   );
 }
-
-// --- TAMBAHKAN DI BAGIAN PALING BAWAH FILE PrintTemplates.jsx ---
 
 export function PrintAuditTemplate({ auditData, auditFilter, auditRayon, churchProfile, onBack }) {
   const b = "border border-black p-1";

@@ -1,8 +1,8 @@
-import React from 'react';
-import { Home, Plus, Search, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, Plus, Search, ChevronLeft, ChevronRight, Users, ChevronDown, Edit, Trash2, Printer, UserPlus } from 'lucide-react';
 
 export default function DataKkTab({
-  appUser, setFormData, setModalMode,
+  appUser, setFormData, setModalMode, jemaatData,
   filterRayon, setFilterRayon, rayonList,
   searchTerm, setSearchTerm,
   itemsPerPage, setItemsPerPage,
@@ -12,6 +12,9 @@ export default function DataKkTab({
   churchProfile,
   SortableHeader, BarisTabelJemaat, handleRowAction
 }) {
+  // State untuk mengontrol kartu mana yang sedang terbuka (expand) di HP
+  const [expandedId, setExpandedId] = useState(null);
+
   return (
     <div className="animate-in fade-in duration-300">
       <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden print:border-none print:shadow-none">
@@ -47,7 +50,7 @@ export default function DataKkTab({
           </div>
         </div>
 
-        {/* TABEL DATA */}
+        {/* AREA DATA */}
         <div className="p-0">
           <div className="hidden print:block mb-4 border-b-2 border-black pb-4">
              <h1 className="text-2xl font-bold uppercase text-center">Data KK</h1>
@@ -55,7 +58,8 @@ export default function DataKkTab({
              <p className="text-center font-medium text-sm">Jemaat {churchProfile?.jemaat}</p>
           </div>
 
-          <div className="overflow-x-auto min-h-[50vh]">
+          {/* DESKTOP VIEW: TABEL KLASIK */}
+          <div className="hidden md:block overflow-x-auto min-h-[50vh]">
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
                 <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider">
@@ -81,6 +85,64 @@ export default function DataKkTab({
                  )}
               </tbody>
             </table>
+          </div>
+
+          {/* MOBILE VIEW: TAMPILAN KARTU (CARDS) */}
+          <div className="md:hidden flex flex-col p-4 gap-3 bg-gray-50 min-h-[50vh]">
+             {currentData.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</div>
+             ) : (
+                currentData.map((row, idx) => (
+                   <div key={row.dbId||idx} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+                      
+                      {/* Kartu Utama (Bisa Diklik) */}
+                      <div onClick={() => setExpandedId(prev => prev === row.idKk ? null : row.idKk)} className="p-4 flex items-center gap-4 cursor-pointer active:bg-blue-50">
+                         <div className="flex flex-col items-center justify-center min-w-70px">
+                              <span className="text-3xl font-black text-blue-600 leading-none">
+                                  {jemaatData ? jemaatData.filter(d => d.idKk === row.idKk && d.statusKeanggotaan !== 'Meninggal' && d.statusKeanggotaan !== 'Pindah').length : 0}
+                              </span>
+                              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1">Jiwa</span>
+                          </div>
+                         
+                         <div className="w-px h-10 border-l-2 border-dashed border-gray-300"></div>
+                         
+                         <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 text-sm">{row.kepalaKeluarga}</h4>
+                            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mt-1">
+                               Rayon: {row.noRayon} &bull; No KK: {row.urutanKk}
+                            </p>
+                         </div>
+                         
+                         <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandedId === row.idKk ? 'rotate-180 text-blue-500' : ''}`} />
+                      </div>
+
+                      {/* Aksi Tambahan (Muncul Saat Kartu Diperluas) */}
+                      {expandedId === row.idKk && (
+                         <div className="bg-blue-50/50 border-t border-gray-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
+                            
+                            {/* Tombol Cetak selalu ada jika role jemaat, penatua, admin */}
+                            {appUser?.role !== 'jemaat' ? (
+                               <button onClick={() => handleRowAction('print_kk', row)} className="flex-1 py-2.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Printer className="w-4 h-4"/> Cetak</button>
+                            ) : (
+                               <span className="flex-1 py-2.5 bg-gray-100 text-gray-500 rounded-xl text-xs font-bold flex items-center justify-center select-none">Hanya Lihat</span>
+                            )}
+                            
+                            {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser?.name)) && (
+                               <>
+                                  <button onClick={() => handleRowAction('add_member', row)} className="w-full py-2.5 bg-green-100 text-green-700 hover:bg-green-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><UserPlus className="w-4 h-4"/> Tambah Anggota ke KK ini</button>
+                                  
+                                  <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit KK</button>
+                                  
+                                  {appUser?.role === 'admin' && (
+                                     <button onClick={() => handleRowAction('delete', row)} className="flex-1 py-2.5 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Trash2 className="w-4 h-4"/> Hapus</button>
+                                  )}
+                               </>
+                            )}
+                         </div>
+                      )}
+                   </div>
+                ))
+             )}
           </div>
         </div>
 

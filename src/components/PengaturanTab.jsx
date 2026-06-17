@@ -12,15 +12,14 @@ export default function PengaturanTab({
   // Props Audit
   auditData,
   auditFilter, setAuditFilter,
-  auditRayon, setAuditRayon, // <--- PASTIKAN DUA INI ADA
+  auditRayon, setAuditRayon,
   showAuditDetail, setShowAuditDetail,
-  handlePrintAudit,          // <--- PASTIKAN INI JUGA ADA (Menggantikan handleDownloadAudit)
+  handlePrintAudit,
   
   // Props Aksi Simpan
   onSaveSettings,
   onSaveAdminPass
 }) {
-  // State lokal khusus untuk UI edit password
   const [isEditingAdminPass, setIsEditingAdminPass] = useState(false);
 
   const handleAddRayon = () => {
@@ -56,23 +55,47 @@ export default function PengaturanTab({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Klasis</label>
-            <input type="text" className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.klasis} onChange={e => setChurchProfile({...churchProfile, klasis: e.target.value})} placeholder="Contoh: KUPANG TENGAH" />
+            <input type="text" className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.klasis || ''} onChange={e => setChurchProfile({...churchProfile, klasis: e.target.value})} placeholder="Contoh: KUPANG TENGAH" />
           </div>
           <div>
             <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Jemaat</label>
-            <input type="text" className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.jemaat} onChange={e => setChurchProfile({...churchProfile, jemaat: e.target.value})} placeholder="Contoh: SYALOM HAUSUSU" />
+            <input type="text" className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.jemaat || ''} onChange={e => setChurchProfile({...churchProfile, jemaat: e.target.value})} placeholder="Contoh: SYALOM HAUSUSU" />
           </div>
           <div>
             <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Mata Jemaat</label>
-            <input type="text" className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.mataJemaat} onChange={e => setChurchProfile({...churchProfile, mataJemaat: e.target.value})} placeholder="Biarkan kosong jika tidak ada" />
+            <input 
+               type="text" 
+               className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" 
+               value={churchProfile.mataJemaat || ''} 
+               onChange={e => setChurchProfile({...churchProfile, mataJemaat: e.target.value})} 
+               placeholder="Biarkan kosong jika tidak ada" 
+            />
           </div>
-          <div>
-            <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Sekretaris Jemaat</label>
-            <input type="text" className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.namaSekretaris || ''} onChange={e => setChurchProfile({...churchProfile, namaSekretaris: e.target.value})} placeholder="Masukkan Nama Sekretaris..." />
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+             <div>
+               <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Ketua Majelis Jemaat</label>
+               <input type="text" className="w-full border-2 border-white bg-white p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.ketuaMajelis || ''} onChange={e => setChurchProfile({...churchProfile, ketuaMajelis: e.target.value})} placeholder="Masukkan Nama Ketua Majelis..." />
+             </div>
+             <div>
+               <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Sekretaris Jemaat</label>
+               <input type="text" className="w-full border-2 border-white bg-white p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.namaSekretaris || ''} onChange={e => setChurchProfile({...churchProfile, namaSekretaris: e.target.value})} placeholder="Masukkan Nama Sekretaris..." />
+             </div>
+             <div>
+               <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Wakil Sekretaris</label>
+               <input type="text" className="w-full border-2 border-white bg-white p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.wakilSekretaris || ''} onChange={e => setChurchProfile({...churchProfile, wakilSekretaris: e.target.value})} placeholder="Masukkan Nama Wakil Sekretaris..." />
+             </div>
+             <div>
+               <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Bendahara</label>
+               <input type="text" className="w-full border-2 border-white bg-white p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.bendahara || ''} onChange={e => setChurchProfile({...churchProfile, bendahara: e.target.value})} placeholder="Masukkan Nama Bendahara..." />
+             </div>
+             <div>
+               <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Nama Wakil Bendahara</label>
+               <input type="text" className="w-full border-2 border-white bg-white p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" value={churchProfile.wakilBendahara || ''} onChange={e => setChurchProfile({...churchProfile, wakilBendahara: e.target.value})} placeholder="Masukkan Nama Wakil Bendahara..." />
+             </div>
           </div>
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 mt-2">
             <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Alamat Lengkap Gereja</label>
-            <textarea className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" rows="2" value={churchProfile.alamat} onChange={e => setChurchProfile({...churchProfile, alamat: e.target.value})} placeholder="Alamat detail..."></textarea>
+            <textarea className="w-full border-2 border-gray-300 p-2.5 rounded-xl focus:border-blue-500 outline-none text-sm font-semibold" rows="2" value={churchProfile.alamat || ''} onChange={e => setChurchProfile({...churchProfile, alamat: e.target.value})} placeholder="Alamat detail..."></textarea>
           </div>
         </div>
       </div>
@@ -95,7 +118,6 @@ export default function PengaturanTab({
         ))}
       </div>
 
-{/* TOMBOL SIMPAN PENGATURAN UMUM (DIPINDAH KE SINI) */}
       <div className="mt-2 mb-10 flex justify-end">
          <button onClick={onSaveSettings} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all active:scale-95">
            Simpan Pengaturan (Profil & Penatua)

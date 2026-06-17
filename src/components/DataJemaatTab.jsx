@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Users, Plus, ChevronDown, Download, FileUp, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Plus, ChevronDown, Download, FileUp, Trash2, Search, ChevronLeft, ChevronRight, Eye, Edit } from 'lucide-react';
+import { calculateAge, toDisplayDate } from '../utils/helpers';
 
 export default function DataJemaatTab({
   appUser, setFormData, setModalMode,
@@ -18,8 +19,18 @@ export default function DataJemaatTab({
   // Infografis
   InfografisTab, jemaatData
 }) {
-   // State Dropdown Opsi Lain berpindah ke sini, sehingga tidak mengotori App.jsx!
    const [showMenuOps, setShowMenuOps] = useState(false);
+   // State untuk mengatur kartu mana yang sedang diklik/dibuka di versi Mobile
+   const [expandedId, setExpandedId] = useState(null);
+    // Fungsi untuk menghasilkan kelas warna border yang konsisten berdasarkan String (idKk)
+    const getColorClassById = (str) => {
+      if (!str) return 'border-gray-200';
+      const colors = ['border-blue-400', 'border-emerald-400', 'border-purple-400', 'border-amber-400', 'border-rose-400', 'border-indigo-400', 'border-teal-400', 'border-orange-400', 'border-pink-400', 'border-cyan-400'];
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      const index = Math.abs(hash) % colors.length;
+      return colors[index];
+    };
 
    return (
     <div className="animate-in fade-in duration-300">
@@ -40,7 +51,7 @@ export default function DataJemaatTab({
             <div className="p-6 border-b border-gray-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4 print:hidden">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-black text-gray-800 flex items-center gap-2 mr-4">
-                  <Users className="w-6 h-6 text-green-600" /> Data Jemaat
+                   <Users className="w-6 h-6 text-green-600" /> Data Jemaat
                 </h2>
                 
                 {subTabJemaat !== 'Infografis' && (appUser?.role === 'admin' || appUser?.role === 'penatua') && (
@@ -103,33 +114,83 @@ export default function DataJemaatTab({
                       <InfografisTab data={jemaatData} filterRayon={filterRayon} type="jemaat" />
                    </div>
                 ) : (
-                   <div className="overflow-x-auto min-h-[50vh]">
-                      <table className="w-full text-left border-collapse min-w-max">
-                        <thead>
-                          <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider">
-                             <SortableHeader label="No" sortKey="no" sortConfig={sortConfig} requestSort={requestSort} className="w-12 text-center" />
-                             {tabCols.map(c => <SortableHeader key={c.l} label={c.l} sortKey={c.k} sortConfig={sortConfig} requestSort={requestSort} className={c.l==='Usia'?'text-center bg-pink-100 text-pink-800':''} />)}
-                             <th className="px-4 py-3 border-b w-40 text-center select-none sticky right-0 bg-gray-100 shadow">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                           {currentData.length === 0 ? (
-                              <tr><td colSpan="20" className="px-4 py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</td></tr>
-                           ) : (
-                              currentData.map((row, idx) => (
-                                 <BarisTabelJemaat
-                                    key={row.dbId||idx} row={row} idx={idx}
-                                    startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
-                                    tabCols={tabCols} activeTab="Data Jemaat"
-                                    appUser={appUser} 
-                                    isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))}
-                                    onAction={handleRowAction}
-                                />
-                              ))
-                           )}
-                        </tbody>
-                      </table>
-                   </div>
+                   <>
+                      {/* DESKTOP VIEW: TABEL KLASIK */}
+                      <div className="hidden md:block overflow-x-auto min-h-[50vh]">
+                        <table className="w-full text-left border-collapse min-w-max">
+                          <thead>
+                            <tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider">
+                               <SortableHeader label="No" sortKey="no" sortConfig={sortConfig} requestSort={requestSort} className="w-12 text-center" />
+                               {tabCols.map(c => <SortableHeader key={c.l} label={c.l} sortKey={c.k} sortConfig={sortConfig} requestSort={requestSort} className={c.l==='Usia'?'text-center bg-pink-100 text-pink-800':''} />)}
+                               <th className="px-4 py-3 border-b w-40 text-center select-none sticky right-0 bg-gray-100 shadow">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-sm">
+                             {currentData.length === 0 ? (
+                                <tr><td colSpan="20" className="px-4 py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</td></tr>
+                             ) : (
+                                currentData.map((row, idx) => (
+                                   <BarisTabelJemaat
+                                      key={row.dbId||idx} row={row} idx={idx}
+                                      startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
+                                      tabCols={tabCols} activeTab="Data Jemaat"
+                                      appUser={appUser} 
+                                      isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))}
+                                      onAction={handleRowAction}
+                                   />
+                                ))
+                             )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* MOBILE VIEW: TAMPILAN KARTU (CARDS) */}
+                      <div className="md:hidden flex flex-col p-4 gap-3 bg-gray-50 min-h-[50vh]">
+                         {currentData.length === 0 ? (
+                            <div className="py-12 text-center text-gray-400 font-bold"><Users className="w-12 h-12 mx-auto mb-3 opacity-50"/> Tidak ada data ditemukan.</div>
+                         ) : (
+                            currentData.map((row, idx) => (
+                               <div key={row.dbId||idx} className={`bg-white border border-gray-200 border-l-8 ${getColorClassById(row.idKk)} rounded-2xl shadow-sm overflow-hidden transition-all duration-200`}>
+                                  {/* Kartu Utama (Bisa Diklik) */}
+                                  <div onClick={() => setExpandedId(prev => prev === row.dbId ? null : row.dbId)} className="p-4 flex items-center gap-4 cursor-pointer active:bg-blue-50">
+                                     <div className="flex flex-col items-center justify-center min-w-50px">
+                                        <span className="text-3xl font-black text-red-600 leading-none">{calculateAge(row.tanggalLahir)}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-1">Tahun</span>
+                                     </div>
+                                     
+                                     <div className="w-px h-10 border-l-2 border-dashed border-gray-300"></div>
+                                     
+                                     <div className="flex-1">
+                                        <h4 className="font-bold text-blue-900 text-sm">{row.namaLengkap}</h4>
+                                        {/* KODE BARU */}
+                                        <p className="text-xs font-semibold text-gray-600 mt-1">
+                                          Nama KK: <span className="font-bold text-gray-800">{row.kepalaKeluarga || '-'}</span>
+                                        </p>
+                                     </div>
+                                     
+                                     <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandedId === row.dbId ? 'rotate-180 text-blue-500' : ''}`} />
+                                  </div>
+
+                                  {/* Aksi Tambahan (Muncul Saat Kartu Diperluas) */}
+                                  {expandedId === row.dbId && (
+                                     <div className="bg-blue-50/50 border-t border-gray-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
+                                        <button onClick={() => handleRowAction('view', row)} className="flex-1 py-2.5 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Eye className="w-4 h-4"/> Detail</button>
+                                        
+                                        {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser?.name)) && (
+                                           <>
+                                              <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit</button>
+                                              {appUser?.role === 'admin' && (
+                                                 <button onClick={() => handleRowAction('delete', row)} className="flex-1 py-2.5 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Trash2 className="w-4 h-4"/> Hapus</button>
+                                              )}
+                                           </>
+                                        )}
+                                     </div>
+                                  )}
+                               </div>
+                            ))
+                         )}
+                      </div>
+                   </>
                 )}
             </div>
 

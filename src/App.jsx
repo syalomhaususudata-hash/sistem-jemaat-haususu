@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { RefreshCw, X, Upload, Printer, ArrowLeft, History, ChevronUp, ChevronDown, ArrowUpDown, Trash2, Edit, Plus, Camera, Eye, LogOut, Gift } from 'lucide-react';
+import { RefreshCw, X, Upload, Printer, ArrowLeft, History, ChevronUp, ChevronDown, ArrowUpDown, Trash2, Edit, Plus, Camera, Eye, LogOut, Gift, MoreVertical } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { initializeFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, setDoc, getDocs } from 'firebase/firestore';
@@ -25,7 +25,7 @@ import PengaturanTab from './components/PengaturanTab';
 
 // --- FIREBASE INIT ---
 const inCanvas = typeof __firebase_config !== 'undefined' && __firebase_config;
-// Kode ini akan otomatis menyesuaikan diri tergantung di mana ia di-hosting (Vercel Koa, Vercel Haususu, dll)
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -38,7 +38,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Memaksa Firestore menggunakan Long Polling agar tidak diblokir ISP lokal
+// Memaksa Firestore menggunakan Long Polling
 const db = initializeFirestore(app, {
   experimentalForceLongPolling: true
 });
@@ -121,7 +121,8 @@ function InfografisTab({ data, filterRayon, type }) {
         const l = d.filter(x => isL(x.jk)).length; const p = d.filter(x => isP(x.jk)).length;
         return { l, p, t: l + p };
      };
-     const sPen = countStats('Penatua'); const sDia = countStats('Diaken'); const sPeng = countStats('Pengajar');
+     const sPen = countStats('Penatua'); const sDia = countStats('Diaken');
+     const sPeng = countStats('Pengajar');
      return (
         <div className="p-4 animate-in fade-in duration-300">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -143,7 +144,6 @@ function InfografisTab({ data, filterRayon, type }) {
       if (key) { if (!acc[key]) acc[key] = []; acc[key].push(obj); }
       return acc;
   }, {});
-  
   Object.values(groupedByKk).forEach(anggotaKk => {
       const kk = anggotaKk.find(a => a.statusKeluarga === 'Kepala Keluarga');
       const istri = anggotaKk.find(a => a.statusKeluarga === 'Istri');
@@ -154,12 +154,10 @@ function InfografisTab({ data, filterRayon, type }) {
           if (jenisNikah.includes('Nikah Catatan Sipil/BS')) nkS++;
       }
   });
-
   const nkB = dAktif.filter(d => {
       const jn = Array.isArray(d.jenisNikah) ? d.jenisNikah : [];
       return jn.includes('Pasangan belum menikah');
   }).length;
-
   return (
     <div className="p-4 animate-in fade-in duration-300">
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -196,7 +194,7 @@ const BarisTabelJemaat = React.memo(({ row, idx, startIndex, tabCols, activeTab,
                       <>
                          <button onClick={() => onAction('view', row)} className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition flex items-center justify-center gap-1 w-full text-xs font-bold" title="Lihat Detail"><Eye className="w-3 h-3" /> Detail</button>
                          {(appUser?.role === 'admin' && activeSubTabStatus !== 'Pindah Masuk Jemaat') && <button onClick={() => onAction('restore', row)} className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition flex items-center justify-center gap-1 w-full text-xs font-bold"><RefreshCw className="w-3 h-3" /> Tarik</button>}
-                         {appUser?.role === 'admin' && (
+                          {appUser?.role === 'admin' && (
                             <button onClick={() => onAction('delete', row)} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition flex items-center justify-center gap-1 w-full text-xs font-bold" title="Hapus Permanen"><Trash2 className="w-3 h-3" /> Hapus</button>
                          )}
                       </>
@@ -235,17 +233,16 @@ export default function App() {
   const [jemaatData, setJemaatData] = useState([]);
   const [majelisData, setMajelisData] = useState([]);
   const [historyData, setHistoryData] = useState([]);
-  
   const [penatuaMap, setPenatuaMap] = useState(DEFAULT_PENATUA);
   const [penatuaPassMap, setPenatuaPassMap] = useState({});
   const [churchProfile, setChurchProfile] = useState(DEFAULT_CHURCH_PROFILE);
   const [adminPass, setAdminPass] = useState('admin123');
-
   const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef(null);
   
   // UI Tabs & Filters
   const [activeTab, setActiveTab] = useState('Data KK');
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [subTabJemaat, setSubTabJemaat] = useState('Tabel Data');
   const [subTabMajelis, setSubTabMajelis] = useState('Tabel Data');
   const [activeSubTabStatus, setActiveSubTabStatus] = useState('Pelayanan Kategori');
@@ -267,7 +264,7 @@ export default function App() {
   // Audit UI state
   const [showAuditDetail, setShowAuditDetail] = useState(false);
   const [auditFilter, setAuditFilter] = useState('Data KK');
-  const [auditRayon, setAuditRayon] = useState('Semua'); // TAMBAHKAN BARIS INI
+  const [auditRayon, setAuditRayon] = useState('Semua');
 
   const showAlert = (title, message) => setAlertDialog({ isOpen: true, title, message });
 
@@ -329,7 +326,7 @@ export default function App() {
 
   const handleSaveAdminPass = async () => {
       try {
-          await setDoc(getDBDoc('settings', 'admin_config'), { password: adminPass }, {merge:true}); 
+          await setDoc(getDBDoc('settings', 'admin_config'), { password: adminPass }, {merge:true});
           showAlert("Sukses", "Password Admin berhasil diubah!");
           return true;
       } catch(e) { showAlert("Error", "Gagal menyimpan password."); return false; }
@@ -395,7 +392,6 @@ export default function App() {
     const activeData = jemaatData.filter(d => d.statusKeanggotaan !== 'Meninggal' && d.statusKeanggotaan !== 'Pindah' && d.statusHidup !== 'Meninggal');
     activeData.sort((a,b) => (a.noRayon||'').localeCompare(b.noRayon||'') || (a.idKk||'').localeCompare(b.idKk||''));
     let index = 1; let parentIndex = 1; let currentKk = '';
-    
     activeData.forEach(d => {
       if (currentKk !== d.idKk) { if(currentKk !== '') parentIndex++; currentKk = d.idKk; }
       let hari = '', bulan = '', tahun = '';
@@ -412,7 +408,6 @@ export default function App() {
       const activeKk = activeData.find(x => x.idKk === d.idKk && x.statusKeluarga === 'Kepala Keluarga');
       const fixNoHp = activeKk?.noHp || d.noHp || '0';
       const fixNamaKk = activeKk?.kepalaKeluarga || activeKk?.namaLengkap || d.kepalaKeluarga || '';
-
       const row = [`Rayon ${d.noRayon || ''}`, d.alamat || '', fixNoHp, fixNamaKk, d.namaLengkap || '', d.nik ? `="${d.nik}"` : '', d.jk || '', d.tempatLahir || '', hari, bulan, tahun, d.goldar || '', d.statusKeluarga || '', d.baptis || '', d.sidi || '', d.nikah || '', statusNikahStr, isAdat, isGereja, isSipil, d.sukuAyah || '', d.sukuIbu || '', d.pendidikan || '', d.pekerjaan || '', d.penghasilan || '', d.asuransi || '', d.jaminan === 'BPJS/Askes' ? 'BPJS/Askes' : '', (d.jaminan && d.jaminan !== 'BPJS/Askes') ? d.jaminan : '', d.jandaDuda === 'Tidak' ? '' : (d.jandaDuda || ''), d.yatimPiatu === 'Tidak' ? '' : (d.yatimPiatu || ''), d.disabilitas || 'Tidak', d.jenisDisabilitas || '', index++, parentIndex, calculateAge(d.tanggalLahir)];
       t += `<tr>${row.map(v => `<td>${safeStr(v)}</td>`).join('')}</tr>`;
     });
@@ -466,10 +461,10 @@ export default function App() {
         const idKey = `${d.idJemaat || ''}-${d.namaLengkap}`.toLowerCase().trim();
         if(existingIdentities.has(idKey)) { duplicateCount++; continue; }
         if(!isMajelis) { d.statusKeanggotaan = 'Aktif'; d.statusHidup = 'Hidup'; }
-        try { await addDoc(getDBCollection(typeName), d); successCount++; existingIdentities.add(idKey);
-        } catch(e) {}
+        try { await addDoc(getDBCollection(typeName), d); successCount++; existingIdentities.add(idKey); } catch(e) {}
       }
-      await recordHistory('IMPORT', typeName, `${successCount} Data CSV Masuk`); await fetchSemuaData();
+      await recordHistory('IMPORT', typeName, `${successCount} Data CSV Masuk`);
+      await fetchSemuaData();
       showAlert('Selesai!', `Berhasil masuk: ${successCount} data.\nDitolak (Dobel Nama): ${duplicateCount} data.`); setIsLoading(false);
     };
     reader.readAsText(file); e.target.value = ''; 
@@ -511,7 +506,8 @@ export default function App() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const dataToSave = { ...formData }; const docId = dataToSave.dbId; delete dataToSave.dbId;
+    const dataToSave = { ...formData };
+    const docId = dataToSave.dbId; delete dataToSave.dbId;
     if (['addKematian', 'addPindah', 'addPindahMasuk'].includes(modalMode) && !dataToSave.jemaatDbId) { return showAlert("Peringatan", "Data Jemaat belum dipilih."); }
 
     try {
@@ -525,11 +521,13 @@ export default function App() {
                 await recordHistory('EDIT', 'jemaat', `Pewarisan KK ke ${newKk.namaLengkap}`); await fetchSemuaData();
                 showAlert("Sukses", `Pewarisan berhasil! ${newKk.namaLengkap} kini menjadi Kepala Keluarga yang sah.`);
             } else { showAlert("Error", "Gagal memproses pewarisan."); }
-            setModalMode(''); return;
+            setModalMode('');
+            return;
         }
 
         if (modalMode === 'addKk' || modalMode === 'editKk') {
-          dataToSave.namaLengkap = dataToSave.kepalaKeluarga; dataToSave.statusKeluarga = 'Kepala Keluarga';
+          dataToSave.namaLengkap = dataToSave.kepalaKeluarga;
+          dataToSave.statusKeluarga = 'Kepala Keluarga';
           if(modalMode === 'addKk') { dataToSave.statusHidup = 'Hidup'; dataToSave.statusKeanggotaan = 'Aktif'; }
           if (modalMode === 'editKk' && docId) {
              const oldData = (jemaatData || []).find(d => d.dbId === docId);
@@ -537,7 +535,8 @@ export default function App() {
                  const familyMembers = (jemaatData || []).filter(d => d.idKk === oldData.idKk && d.dbId !== docId);
                  for (const mem of familyMembers) {
                      const newIdJemaat = `AG${pad0(dataToSave.noRayon)}${pad0(dataToSave.urutanKk)}${pad0(mem.noAnggota)}`;
-                     try { await updateDoc(getDBDoc('jemaat', mem.dbId), { idKk: dataToSave.idKk, noRayon: dataToSave.noRayon, urutanKk: dataToSave.urutanKk, penatua: dataToSave.penatua, idJemaat: newIdJemaat, alamat: dataToSave.alamat }); } catch(err){}
+                     try { await updateDoc(getDBDoc('jemaat', mem.dbId), { idKk: dataToSave.idKk, noRayon: dataToSave.noRayon, urutanKk: dataToSave.urutanKk, penatua: dataToSave.penatua, idJemaat: newIdJemaat, alamat: dataToSave.alamat });
+                     } catch(err){}
                  }
              }
           }
@@ -562,7 +561,8 @@ export default function App() {
   };
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target; let updates = { [name]: value };
+    const { name, value } = e.target;
+    let updates = { [name]: value };
     if (modalMode === 'addKk' || modalMode === 'editKk') {
       const ry = name === 'noRayon' ? value : formData.noRayon, ur = name === 'urutanKk' ? value : formData.urutanKk;
       if(ry && ur) updates.idKk = `KK${pad0(ry)}${pad0(ur)}`;
@@ -587,15 +587,19 @@ export default function App() {
     if (!formData?.noRayon) return [];
     return (jemaatData || []).filter(d => d?.statusKeluarga === 'Kepala Keluarga' && String(d?.noRayon) === String(formData?.noRayon) && d?.dbId !== formData?.dbId && d?.statusKeanggotaan !== 'Meninggal' && d?.statusKeanggotaan !== 'Pindah').map(d => parseInt(d?.urutanKk)).filter(n => !isNaN(n));
   }, [jemaatData, formData?.noRayon, formData?.dbId]);
+
   const urutanKkOpts = useMemo(() => { const opts = []; for(let i=1; i<=100; i++) { if (!usedUrutanKkNum.includes(i)) opts.push(i); } return opts; }, [usedUrutanKkNum]);
+
   const usedNoAnggotaNum = useMemo(() => {
     if (!formData?.idKk) return [];
     return (jemaatData || []).filter(d => d?.idKk === formData?.idKk && d?.dbId !== formData?.dbId).map(d => parseInt(d?.noAnggota)).filter(n => !isNaN(n));
   }, [jemaatData, formData?.idKk, formData?.dbId]);
+
   const noAnggotaOpts = useMemo(() => { const opts = []; for(let i=1; i<=30; i++) { if (!usedNoAnggotaNum.includes(i)) opts.push(i); } return opts; }, [usedNoAnggotaNum]);
 
   const getTabHeaders = () => {
-    const r = (v) => `R-${v}`; const bld = (v) => <span className="font-bold">{v}</span>; const lp = (v) => isL(v)?'L':(isP(v)?'P':'-');
+    const r = (v) => `R-${v}`;
+    const bld = (v) => <span className="font-bold">{v}</span>; const lp = (v) => isL(v)?'L':(isP(v)?'P':'-');
     if (activeTab === 'Data KK') return [{l:'Kepala Keluarga',k:'kepalaKeluarga', fmt:v=><span className="font-bold text-blue-700">{v}</span>},{l:'Nomor HP',k:'noHp'}, {l:'Bentuk Rumah',k:'bentukRumah'}, {l:'Status Rumah',k:'statusRumah', fmt:v=><span className="bg-gray-100 px-2 py-1 rounded text-xs font-semibold">{v}</span>}, {l:'Rayon',k:'noRayon', fmt:r}, {l:'Urutan KK',k:'urutanKk'}];
     if (activeTab === 'Data Jemaat') return [{l:'Nama Lengkap',k:'namaLengkap', fmt:v=><span className="font-bold text-blue-900">{v}</span>},{l:'Rayon',k:'noRayon', fmt:r}, {l:'Kepala Keluarga',k:'kepalaKeluarga', fmt:bld},{l:'L/P',k:'jk', fmt:lp}, {l:'Status Keluarga',k:'statusKeluarga', fmt:v=><span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-bold">{v}</span>}, {l:'Pekerjaan',k:'pekerjaan'}];
     if (activeTab === 'Status Jemaat') {
@@ -659,9 +663,6 @@ export default function App() {
   const auditData = useMemo(() => {
      const reqKk = ['noHp', 'bentukRumah', 'statusRumah', 'alamat'];
      const baseJemaat = ['nik', 'tempatLahir', 'tanggalLahir', 'goldar', 'sukuAyah', 'sukuIbu', 'pendidikan', 'pekerjaan', 'penghasilan', 'jandaDuda', 'yatimPiatu'];
-     // --- KODE BARU UNTUK AUDIT MAJELIS ---
-     // Ganti const reqMajelis yang lama dengan yang di bawah ini:
-     // GANTI VARIABEL reqMajelis LAMA DENGAN INI:
       const reqMajelis = [
           'tempatLahir', 'tanggalLahir', 'goldar', 'anakKe', 'jumlahSaudara', 'jabatanMasyarakat', 'jabatanGereja',
           'tempatNikah', 'tanggalNikah',
@@ -674,7 +675,6 @@ export default function App() {
       ];
      let kkCount = 0, anggotaCount = 0, majelisCount = 0; const currentList = [];
      const isMissing = (val) => !val || val === '-' || String(val).trim() === '';
-
      (jemaatData || []).forEach(d => {
          if(d.statusKeanggotaan === 'Meninggal' || d.statusKeanggotaan === 'Pindah') return;
          if (d.statusKeluarga === 'Kepala Keluarga') {
@@ -688,9 +688,12 @@ export default function App() {
          if (isMissing(d.sidi)) missingJem.push('Status Sidi');
          else if (d.sidi === 'Ya') { if (isMissing(d.gerejaSidi)) missingJem.push('Gereja Sidi'); if (isMissing(d.tanggalSidi)) missingJem.push('Tgl Sidi'); if (isMissing(d.pendetaSidi)) missingJem.push('Pendeta Sidi'); }
          if (isMissing(d.nikah)) missingJem.push('Status Nikah');
-         else if (d.nikah === 'Ya') { if (isMissing(d.gerejaNikah)) missingJem.push('Gereja Nikah'); if (isMissing(d.tanggalNikah)) missingJem.push('Tgl Nikah'); if (isMissing(d.pendetaNikah)) missingJem.push('Pendeta Nikah'); if (!d.jenisNikah || d.jenisNikah.length === 0) missingJem.push('Jenis Nikah'); }
-         if (isMissing(d.asuransi)) missingJem.push('Status Asuransi'); else if (d.asuransi === 'Ya' && isMissing(d.jaminan)) missingJem.push('Nama Jaminan Kesehatan');
-         if (isMissing(d.disabilitas)) missingJem.push('Status Disabilitas'); else if (d.disabilitas === 'Ya' && isMissing(d.jenisDisabilitas)) missingJem.push('Jenis Disabilitas');
+         else if (d.nikah === 'Ya') { if (isMissing(d.gerejaNikah)) missingJem.push('Gereja Nikah'); if (isMissing(d.tanggalNikah)) missingJem.push('Tgl Nikah'); if (isMissing(d.pendetaNikah)) missingJem.push('Pendeta Nikah');
+         if (!d.jenisNikah || d.jenisNikah.length === 0) missingJem.push('Jenis Nikah'); }
+         if (isMissing(d.asuransi)) missingJem.push('Status Asuransi');
+         else if (d.asuransi === 'Ya' && isMissing(d.jaminan)) missingJem.push('Nama Jaminan Kesehatan');
+         if (isMissing(d.disabilitas)) missingJem.push('Status Disabilitas');
+         else if (d.disabilitas === 'Ya' && isMissing(d.jenisDisabilitas)) missingJem.push('Jenis Disabilitas');
          if (missingJem.length > 0) anggotaCount++;
          if (auditFilter === 'Data Jemaat' && missingJem.length > 0) currentList.push({ id: d.dbId, nama: d.namaLengkap || d.kepalaKeluarga, tipe: d.statusKeluarga, missing: missingJem.join(', ') });
      });
@@ -727,7 +730,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 font-sans text-gray-800 pb-10">
       {confirmDialog.isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
              <div className="p-5 border-b bg-gray-50"><h3 className="text-xl font-black text-gray-800">{confirmDialog.title}</h3></div>
              <div className="p-6"><p className="text-gray-600 font-medium">{confirmDialog.message}</p></div>
@@ -737,7 +740,7 @@ export default function App() {
       )}
 
       {alertDialog.isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
              <div className="p-5 border-b bg-gray-50"><h3 className="text-xl font-black text-gray-800">{alertDialog.title}</h3></div>
              <div className="p-6"><p className="text-gray-600 font-medium whitespace-pre-line">{alertDialog.message}</p></div>
@@ -747,7 +750,8 @@ export default function App() {
       )}
 
       {modalMode && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto print:hidden">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto print:hidden">
+          {/* Modal Container: Dioptimasi untuk HP dengan w-full max-h-[90vh] */}
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl mt-20 mb-10 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl shrink-0">
               <h3 className="text-xl font-black text-gray-800">{modalMode === 'warisanKk' ? 'Pewarisan Kepala Keluarga' : modalMode.includes('Kk') ? 'Formulir Kepala Keluarga' : modalMode === 'viewJemaat' ? 'Detail Lengkap Jemaat' : modalMode.includes('Majelis') ? 'Formulir Data Majelis' : 'Formulir Data Jemaat'}</h3>
@@ -760,8 +764,8 @@ export default function App() {
                   <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                     <h4 className="font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">Tunjuk Kepala Keluarga Baru</h4>
                     <p className="text-sm text-gray-700 mb-5">Kepala Keluarga sebelumnya telah dinonaktifkan. Silakan konfirmasi pewaris KK di bawah ini.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <div className="md:col-span-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <div className="sm:col-span-2">
                           <label className="text-xs font-bold text-gray-700 mb-1 block uppercase tracking-wider">Pilih Anggota Pengganti (Prioritas: Istri)</label>
                           <select name="calonKkDbId" value={formData.calonKkDbId || ''} onChange={(e) => { const sel = jemaatData.find(x => x.dbId === e.target.value); setFormData(p => ({...p, calonKkDbId: e.target.value, kepalaKeluarga: sel?.namaLengkap})); }} className="w-full border-2 border-blue-300 p-3 rounded-xl bg-white text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
                              {jemaatData.filter(d => d.idKk === formData.idKk && d.dbId !== formData.deadKkDbId && d.statusKeanggotaan !== 'Meninggal' && d.statusKeanggotaan !== 'Pindah').map(m => (<option key={m.dbId} value={m.dbId}>{m.namaLengkap} (Status Lama: {m.statusKeluarga})</option>))}
@@ -774,7 +778,7 @@ export default function App() {
                 {(modalMode === 'addKk' || modalMode === 'editKk') && (
                   <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
                     <h4 className="font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">Data Kepala Keluarga</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormInput req label="Nomor Rayon" name="noRayon" type="select" opts={rayonList} value={formData.noRayon} onChange={handleFormChange} />
                       <FormInput req label="Urutan KK Ke-" name="urutanKk" type="select" opts={urutanKkOpts} value={formData.urutanKk} onChange={handleFormChange} />
                       <FormInput label="ID KK (Otomatis)" name="idKk" value={formData.idKk} dis span={2} />
@@ -787,8 +791,8 @@ export default function App() {
                   </div>
                 )}
                 {(modalMode === 'addAnggota' || modalMode === 'addJemaat' || modalMode === 'editJemaat') && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
-                    <div className="md:col-span-2 bg-gray-100 p-5 rounded-xl border border-gray-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-2">
+                    <div className="sm:col-span-2 md:col-span-3 bg-gray-100 p-5 rounded-xl border border-gray-200">
                       <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">Pilih Penempatan Keluarga</h4>
                       {(modalMode === 'addJemaat' || modalMode === 'editJemaat') && (
                         <div className="mb-5 bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -809,21 +813,21 @@ export default function App() {
                         <FormInput label="Kepala Keluarga" value={formData.kepalaKeluarga} dis /> <FormInput label="Rayon" value={formData.noRayon} dis />
                       </div>
                     </div>
-                    <h4 className="md:col-span-2 font-bold text-gray-800 border-b pb-2 mt-2 text-lg">Data Pribadi</h4>
+                    <h4 className="sm:col-span-2 md:col-span-3 font-bold text-gray-800 border-b pb-2 mt-2 text-lg">Data Pribadi</h4>
                     {JEMAAT_FIELDS_PRIBADI.map(f => { const fieldProps = { ...f }; if (f.name === 'noAnggota') fieldProps.opts = noAnggotaOpts; return <FormInput key={f.name} {...fieldProps} value={formData[f.name]} onChange={handleFormChange} /> })}
-                    <h4 className="md:col-span-2 font-bold text-gray-800 border-b pb-2 mt-4 text-lg">Agama & Pendidikan</h4>
-                    <div className="md:col-span-2 grid grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
+                    <h4 className="sm:col-span-2 md:col-span-3 font-bold text-gray-800 border-b pb-2 mt-4 text-lg">Agama & Pendidikan</h4>
+                    <div className="sm:col-span-2 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
                       <FormInput label="Sudah Baptis?" name="baptis" type="select" opts={['Ya','Belum']} value={formData.baptis} onChange={handleFormChange} /> <FormInput label="Gereja Baptis" name="gerejaBaptis" dis={formData.baptis!=='Ya'} value={formData.gerejaBaptis} onChange={handleFormChange} /> <FormInput label="Tgl Baptis" name="tanggalBaptis" type="date" dis={formData.baptis!=='Ya'} value={formData.tanggalBaptis} onChange={handleFormChange} /> <FormInput label="Pendeta Baptis" name="pendetaBaptis" dis={formData.baptis!=='Ya'} value={formData.pendetaBaptis} onChange={handleFormChange} />
                     </div>
-                    <div className="md:col-span-2 grid grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
+                    <div className="sm:col-span-2 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
                       <FormInput label="Sudah Sidi?" name="sidi" type="select" opts={['Ya','Belum']} value={formData.sidi} onChange={handleFormChange} /> <FormInput label="Gereja Sidi" name="gerejaSidi" dis={formData.sidi!=='Ya'} value={formData.gerejaSidi} onChange={handleFormChange} /> <FormInput label="Tgl Sidi" name="tanggalSidi" type="date" dis={formData.sidi!=='Ya'} value={formData.tanggalSidi} onChange={handleFormChange} /> <FormInput label="Pendeta Sidi" name="pendetaSidi" dis={formData.sidi!=='Ya'} value={formData.pendetaSidi} onChange={handleFormChange} />
                     </div>
-                    <div className="md:col-span-2 grid grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
+                    <div className="sm:col-span-2 md:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 p-3 rounded border">
                       <FormInput label="Sudah Nikah?" name="nikah" type="select" opts={['Ya','Belum']} value={formData.nikah} onChange={handleFormChange} /> <FormInput label="Gereja Nikah" name="gerejaNikah" dis={formData.nikah!=='Ya'} value={formData.gerejaNikah} onChange={handleFormChange} /> <FormInput label="Tgl Nikah" name="tanggalNikah" type="date" dis={formData.nikah!=='Ya'} value={formData.tanggalNikah} onChange={handleFormChange} /> <FormInput label="Pendeta Nikah" name="pendetaNikah" dis={formData.nikah!=='Ya'} value={formData.pendetaNikah} onChange={handleFormChange} />
                       <FormInput label="Jenis Nikah" name="jenisNikah" isCheckboxGroup opts={['Nikah Adat', 'Nikah Gereja/Masehi', 'Nikah Catatan Sipil/BS', 'Pasangan belum menikah']} dis={formData.nikah!=='Ya'} value={formData.jenisNikah} onCheckboxChange={handleCheckboxChange} span={4} />
                     </div>
                     {JEMAAT_EDU.map(f => <FormInput key={f.name} {...f} value={formData[f.name]} onChange={handleFormChange} />)}
-                    <h4 className="md:col-span-2 font-bold text-gray-800 border-b pb-2 mt-4 text-lg">Kesehatan & Status Sosial</h4>
+                    <h4 className="sm:col-span-2 md:col-span-3 font-bold text-gray-800 border-b pb-2 mt-4 text-lg">Kesehatan & Status Sosial</h4>
                     <FormInput label="Asuransi Kesehatan" name="asuransi" type="select" opts={['Ya','Tidak']} value={formData.asuransi} onChange={handleFormChange} /> <FormInput label="Jaminan" name="jaminan" type="select" opts={['BPJS/Askes','Asuransi Kesehatan lainnya']} dis={formData.asuransi!=='Ya'} value={formData.jaminan} onChange={handleFormChange} />
                     <FormInput label="Janda/Duda" name="jandaDuda" type="select" opts={['Tidak','Janda','Duda']} value={formData.jandaDuda} onChange={handleFormChange} /> <FormInput label="Yatim Piatu" name="yatimPiatu" type="select" opts={['Tidak','Yatim','Piatu','Yatim Piatu']} value={formData.yatimPiatu} onChange={handleFormChange} />
                     <FormInput label="Disabilitas" name="disabilitas" type="select" opts={['Ya','Tidak']} value={formData.disabilitas} onChange={handleFormChange} /> <FormInput label="Jenis Disabilitas" name="jenisDisabilitas" type="select" opts={['Tuna Netra', 'Tuna Rungu', 'Tuna Wicara', 'Tuna Daksa', 'Tuna Laras', 'Tuna Grahita']} dis={formData.disabilitas!=='Ya'} value={formData.jenisDisabilitas} onChange={handleFormChange} />
@@ -831,8 +835,8 @@ export default function App() {
                  </div>
                 )}
                 {(modalMode === 'addMajelis' || modalMode === 'editMajelis') && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
-                    <div className="md:col-span-2 lg:col-span-3 mb-4 flex flex-col sm:flex-row items-center gap-6 bg-purple-50 p-6 rounded-xl border border-purple-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-2">
+                    <div className="sm:col-span-2 md:col-span-3 mb-4 flex flex-col sm:flex-row items-center gap-6 bg-purple-50 p-6 rounded-xl border border-purple-100">
                       <div className="w-32 h-40 bg-white rounded-lg flex items-center justify-center overflow-hidden border-2 border-dashed border-purple-300 shadow-inner shrink-0 relative group">
                         {formData.fotoBase64 ? <img src={formData.fotoBase64} alt="Foto" className="w-full h-full object-cover" /> : <Camera className="w-8 h-8 text-purple-200" />}
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><span className="text-white text-xs font-bold">Ganti Foto</span></div>
@@ -841,7 +845,7 @@ export default function App() {
                     </div>
                     {FORM_MAJELIS.map((sec, i) => (
                       <React.Fragment key={`sec-${i}`}>
-                        <h4 className="md:col-span-2 lg:col-span-3 font-black text-gray-800 border-b-2 border-gray-100 pb-2 mt-4 text-lg w-full uppercase">{sec.t}</h4>
+                        <h4 className="sm:col-span-2 md:col-span-3 font-black text-gray-800 border-b-2 border-gray-100 pb-2 mt-4 text-lg w-full uppercase">{sec.t}</h4>
                         {sec.f.map((field, idx) => (
                           <React.Fragment key={`field-${i}-${idx}`}>
                               {field.t === 'sel' ? <FormInput label={field.l} name={field.k} type="select" opts={field.opts} value={formData[field.k]} onChange={handleFormChange} req={field.req} span={field.span} />
@@ -851,7 +855,7 @@ export default function App() {
                         ))}
                       </React.Fragment>
                     ))}
-                    <div className="md:col-span-2 lg:col-span-3 mt-6 border-t-2 border-purple-200 pt-6">
+                    <div className="sm:col-span-2 md:col-span-3 mt-6 border-t-2 border-purple-200 pt-6">
                       <div className="flex justify-between items-center mb-6"><h4 className="font-black text-purple-900 text-lg uppercase">Data Identitas Anak</h4><button type="button" onClick={() => setFormData(p => ({...p, anak: [...(Array.isArray(p.anak)?p.anak:[]), {}]}))} className="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1 transition-colors"><Plus className="w-4 h-4"/> Tambah Anak</button></div>
                       {(Array.isArray(formData.anak)?formData.anak:[]).map((a, i) => (
                         <div key={`anak-${i}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-white border-2 border-purple-100 rounded-xl mb-4 relative shadow-sm">
@@ -876,7 +880,7 @@ export default function App() {
                   </div>
                 )}
                 {modalMode === 'viewJemaat' && (
-                  <div className="p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                      {Object.keys(JEMAAT_HEADER_MAP).filter(h => !['ID KK', 'ID Jemaat', 'No Anggota', 'Urutan KK', 'No Rayon'].includes(h)).map(header => {
                         const key = JEMAAT_HEADER_MAP[header]; let val = formData[key];
                          if (['tanggalLahir', 'tanggalBaptis', 'tanggalSidi', 'tanggalNikah', 'tanggalKematian', 'tanggalPenguburan', 'tanggalPindah', 'tanggalMasuk'].includes(key)) val = toDisplayDate(val);
@@ -907,11 +911,11 @@ export default function App() {
             <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain bg-white rounded-full p-1 shadow-sm border border-gray-100" />
             <div>
               <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight uppercase">
-              Sistem Data Jemaat {churchProfile?.mataJemaat || churchProfile?.jemaat || ''}
+              Sistem Data {churchProfile?.jemaat || ''}
               </h1>
               <div className="text-xs font-bold hidden md:flex flex-col mt-1">
                 <div className="flex items-center gap-1 mb-1 text-blue-600"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> DB Terkoneksi • Akses: <span className="uppercase">{appUser?.role}</span></div>
-                <div className="text-gray-500 text-[10px] leading-tight uppercase">{churchProfile?.sinode || 'GMIT'} {churchProfile?.jemaat ? ` | JEMAAT ${churchProfile.jemaat}` : ''}</div>
+                <div className="text-gray-500 text-[10px] leading-tight uppercase">{churchProfile?.klasis || 'GEREJA'}</div>
               </div>
             </div>
           </div>
@@ -929,11 +933,26 @@ export default function App() {
         </header>
 
         <main className="px-4 md:px-8 max-w-[98%] mx-auto print:pt-4 print:px-0">
-          <div className="flex lg:hidden overflow-x-auto gap-2 pb-4 mb-4 scrollbar-hide print:hidden">
-             {['Data KK', 'Data Jemaat', 'Profil Majelis', 'Status Jemaat', ...(appUser?.role === 'admin' ? ['Riwayat Sistem', 'Pengaturan'] : [])].map((tab) => (
-              <button key={tab} onClick={() => {setActiveTab(tab); setSortConfig({key:null, direction:'asc'});}} className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === tab ? 'bg-blue-600 text-white shadow-md' : 'bg-white border-2 text-gray-600 hover:bg-gray-100'}`}>{tab}</button>
-            ))}
-          </div>
+         
+          <div className="flex lg:hidden justify-between items-center bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-gray-200 mb-4 print:hidden relative">
+   <span className="font-black text-blue-800 tracking-wide text-lg">{activeTab}</span>
+   <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors">
+     <MoreVertical className="w-6 h-6" />
+   </button>
+   
+   {showMobileMenu && (
+     <div className="absolute top-[110%] right-0 bg-white shadow-xl border border-gray-200 rounded-2xl w-56 z-60 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+       {['Data KK', 'Data Jemaat', 'Profil Majelis', 'Status Jemaat', ...(appUser?.role === 'admin' ? ['Riwayat Sistem', 'Pengaturan'] : [])].map((tab) => (
+         <button 
+            key={tab} 
+            onClick={() => {setActiveTab(tab); setSortConfig({key:null, direction:'asc'}); setShowMobileMenu(false);}} 
+            className={`text-left px-5 py-3.5 text-sm font-bold border-b border-gray-50 last:border-0 transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+           {tab}
+         </button>
+       ))}
+     </div>
+   )}
+</div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-32 print:hidden"><RefreshCw className="w-12 h-12 text-blue-600 animate-spin mb-4" /><p className="text-gray-500 font-bold animate-pulse">Memuat Database...</p></div>
@@ -946,13 +965,14 @@ export default function App() {
                      penatuaPassMap={penatuaPassMap} setPenatuaPassMap={setPenatuaPassMap}
                      adminPass={adminPass} setAdminPass={setAdminPass} rayonList={rayonList}
                      auditData={auditData} auditFilter={auditFilter} setAuditFilter={setAuditFilter}
-                     auditRayon={auditRayon} setAuditRayon={setAuditRayon} // TAMBAHAN
+                     auditRayon={auditRayon} setAuditRayon={setAuditRayon} 
                      showAuditDetail={showAuditDetail} setShowAuditDetail={setShowAuditDetail}
-                     handlePrintAudit={handlePrintAudit} // UBAH NAMA PROP INI
+                     handlePrintAudit={handlePrintAudit} 
                      onSaveSettings={handleSaveSettings} onSaveAdminPass={handleSaveAdminPass}
                   />
                ) : activeTab === 'Data KK' ? (
                   <DataKkTab
+                     jemaatData={jemaatData}
                      appUser={appUser} setFormData={setFormData} setModalMode={setModalMode}
                      filterRayon={filterRayon} setFilterRayon={setFilterRayon} rayonList={rayonList}
                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -1008,15 +1028,15 @@ export default function App() {
                   />
                ) : activeTab === 'Riwayat Sistem' ? (
                   <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden print:border-none print:shadow-none">
-                     <div className="p-6 border-b border-gray-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                     <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h2 className="text-xl font-black text-gray-800 flex items-center gap-2 mr-4"><History className="w-6 h-6 text-red-600" /> Riwayat Sistem</h2>
                         <select value={filterHistoryAction} onChange={(e) => setFilterHistoryAction(e.target.value)} className="bg-red-50 border-2 border-red-200 text-red-800 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0"><option value="Semua">Semua Aksi</option><option value="TAMBAH">Tambah Data</option><option value="EDIT">Edit Data</option><option value="HAPUS">Hapus Data</option><option value="RESTORE">Tarik/Restore</option><option value="IMPORT">Import Data</option><option value="HAPUS SEMUA">Hapus Semua Data</option></select>
                      </div>
-                     <div className="overflow-x-auto min-h-[50vh]">
+                     <div className="w-full overflow-x-auto custom-scrollbar min-h-[50vh]">
                         <table className="w-full text-left border-collapse min-w-max">
                           <thead><tr className="bg-gray-50 border-b-2 border-gray-200 text-gray-500 text-xs font-black uppercase tracking-wider"><SortableHeader label="No" sortKey="no" sortConfig={sortConfig} requestSort={requestSort} className="w-12 text-center" />{tabCols.map(c => <SortableHeader key={c.l} label={c.l} sortKey={c.k} sortConfig={sortConfig} requestSort={requestSort} />)}</tr></thead>
                           <tbody className="text-sm">
-                             {currentData.length === 0 ? <tr><td colSpan="20" className="px-4 py-12 text-center text-gray-400 font-bold">Tidak ada riwayat.</td></tr> : currentData.map((row, idx) => ( <BarisTabelJemaat key={row.dbId||idx} row={row} idx={idx} startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage} tabCols={tabCols} activeTab="Riwayat Sistem" appUser={appUser} isEditable={false} onAction={()=>{}} /> ))}
+                            {currentData.length === 0 ? <tr><td colSpan="20" className="px-4 py-12 text-center text-gray-400 font-bold">Tidak ada riwayat.</td></tr> : currentData.map((row, idx) => ( <BarisTabelJemaat key={row.dbId||idx} row={row} idx={idx} startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage} tabCols={tabCols} activeTab="Riwayat Sistem" appUser={appUser} isEditable={false} onAction={()=>{}} /> ))}
                           </tbody>
                         </table>
                      </div>
