@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { UserCheck, Plus, ChevronDown, Download, FileUp, Trash2, Search, ChevronLeft, ChevronRight, Users, Eye, Edit, Printer } from 'lucide-react';
 
 export default function ProfilMajelisTab({
-  appUser, setFormData, setModalMode,
+  appUser, setFormData, setModalMode, penatuaMap,
   subTabMajelis, setSubTabMajelis,
   filterRayon, setFilterRayon, rayonList,
   searchTerm, setSearchTerm,
@@ -68,24 +68,27 @@ export default function ProfilMajelisTab({
                 )}
               </div>
 
-              {subTabMajelis !== 'Infografis' && (
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
                   <select value={filterRayon} onChange={(e) => setFilterRayon(e.target.value)} className="bg-purple-50 border-2 border-purple-200 text-purple-800 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
                     <option value="Semua">Semua Rayon</option>
                     {rayonList.map(i => <option key={i} value={i}>Rayon {i}</option>)}
                   </select>
-                  <div className="relative w-full sm:w-auto flex-1">
-                    <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input type="text" placeholder="Cari majelis..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full xl:w-60 pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm font-bold text-gray-700" />
-                  </div>
-                  <select value={itemsPerPage} onChange={(e) => setItemsPerPage(e.target.value === 'Semua' ? 'Semua' : Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
-                    <option value={5}>Tampil 5</option>
-                    <option value={10}>Tampil 10</option>
-                    <option value={20}>Tampil 20</option>
-                    <option value="Semua">Tampil Semua</option>
-                  </select>
-                </div>
-              )}
+
+               {subTabMajelis !== 'Infografis' && (
+                  <>
+                     <div className="relative w-full sm:w-auto flex-1">
+                       <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                       <input type="text" placeholder="Cari majelis..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full xl:w-60 pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm font-bold text-gray-700" />
+                     </div>
+                     <select value={itemsPerPage} onChange={(e) => setItemsPerPage(e.target.value === 'Semua' ? 'Semua' : Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
+                       <option value={5}>Tampil 5</option>
+                       <option value={10}>Tampil 10</option>
+                       <option value={20}>Tampil 20</option>
+                       <option value="Semua">Tampil Semua</option>
+                     </select>
+                  </>
+               )}
+              </div>
             </div>
 
             <div className="p-0">
@@ -120,7 +123,7 @@ export default function ProfilMajelisTab({
                                       startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
                                       tabCols={tabCols} activeTab="Profil Majelis"
                                       appUser={appUser} 
-                                      isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))}
+                                      isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && penatuaMap[row?.noRayon] === appUser?.name)}
                                       onAction={handleRowAction}
                                   />
                                 ))
@@ -159,12 +162,12 @@ export default function ProfilMajelisTab({
                                   {expandedId === row.dbId && (
                                      <div className="bg-purple-50/50 border-t border-purple-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
                                         {appUser?.role !== 'jemaat' ? (
-                                           <button onClick={() => handleRowAction('print_majelis', row)} className="flex-1 py-2.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Printer className="w-4 h-4"/> Cetak</button>
+                                           <button onClick={() => handleRowAction('print_majelis', row)} className="flex-1 py-2.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Printer className="w-4 h-4"/> Cetak Profil</button>
                                         ) : (
-                                           <span className="flex-1 py-2.5 bg-gray-100 text-gray-500 rounded-xl text-xs font-bold flex items-center justify-center select-none">Hanya Lihat</span>
+                                           <button onClick={() => handleRowAction('view', row)} className="flex-1 py-2.5 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Eye className="w-4 h-4"/> Detail</button>
                                         )}
                                         
-                                        {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser?.name)) && (
+                                        {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && penatuaMap[row?.noRayon] === appUser?.name)) && (
                                            <>
                                               <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit</button>
                                               {appUser?.role === 'admin' && (

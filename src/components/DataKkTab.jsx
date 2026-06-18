@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Home, Plus, Search, ChevronLeft, ChevronRight, Users, ChevronDown, Edit, Trash2, Printer, UserPlus } from 'lucide-react';
+import { Home, Plus, Search, ChevronLeft, ChevronRight, Users, ChevronDown, Edit, Trash2, Printer, UserPlus, Eye } from 'lucide-react';
 
 export default function DataKkTab({
-  appUser, setFormData, setModalMode, jemaatData,
+  appUser, setFormData, setModalMode, jemaatData, penatuaMap,
   filterRayon, setFilterRayon, rayonList,
   searchTerm, setSearchTerm,
   itemsPerPage, setItemsPerPage,
@@ -74,13 +74,14 @@ export default function DataKkTab({
                  ) : (
                     currentData.map((row, idx) => (
                        <BarisTabelJemaat
-                          key={row.dbId||idx} row={row} idx={idx}
-                          startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
-                          tabCols={tabCols} activeTab="Data KK"
-                          appUser={appUser} 
-                          isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))} 
-                          onAction={handleRowAction}
-                      />
+   key={row.dbId||idx} row={row} idx={idx}
+   startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
+   tabCols={tabCols} activeTab="Data KK"
+   appUser={appUser} 
+   isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && penatuaMap[row?.noRayon] === appUser?.name)} 
+   onAction={handleRowAction}
+   jemaatData={jemaatData} 
+/>
                     ))
                  )}
               </tbody>
@@ -118,29 +119,45 @@ export default function DataKkTab({
 
                       {/* Aksi Tambahan (Muncul Saat Kartu Diperluas) */}
                       {expandedId === row.idKk && (
-                         <div className="bg-blue-50/50 border-t border-gray-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
+                         <div className="bg-blue-50/50 border-t border-gray-100 flex flex-col animate-in slide-in-from-top-2 duration-200">
                             
-                            {/* Tombol Cetak selalu ada jika role jemaat, penatua, admin */}
-                            {appUser?.role !== 'jemaat' ? (
-                               <button onClick={() => handleRowAction('print_kk', row)} className="flex-1 py-2.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Printer className="w-4 h-4"/> Cetak</button>
-                            ) : (
-                               <span className="flex-1 py-2.5 bg-gray-100 text-gray-500 rounded-xl text-xs font-bold flex items-center justify-center select-none">Hanya Lihat</span>
-                            )}
+                            {/* TAMPILAN ANGGOTA KELUARGA MOBILE */}
+                            <div className="p-4 border-b border-gray-200">
+                               <h5 className="text-[10px] font-black text-blue-800 uppercase tracking-wider mb-2">Daftar Anggota Keluarga</h5>
+                               <div className="flex flex-col gap-2">
+                                  {jemaatData && jemaatData
+                                    .filter(d => d.idKk === row.idKk && d.statusKeanggotaan !== 'Meninggal' && d.statusKeanggotaan !== 'Pindah')
+                                    .sort((a,b) => parseInt(a.noAnggota || 99) - parseInt(b.noAnggota || 99))
+                                    .map((anggota, i) => (
+                                    <div key={anggota.dbId} className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
+                                       <span className="font-semibold text-sm text-gray-800"><span className="text-gray-400 mr-2">{i+1}.</span>{anggota.namaLengkap}</span>
+                                       <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full font-bold">{anggota.statusKeluarga}</span>
+                                    </div>
+                                  ))}
+                               </div>
+                            </div>
                             
-                            {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser?.name)) && (
-                               <>
-                                  <button onClick={() => handleRowAction('add_member', row)} className="w-full py-2.5 bg-green-100 text-green-700 hover:bg-green-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><UserPlus className="w-4 h-4"/> Tambah Anggota ke KK ini</button>
-                                  
-                                  <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit KK</button>
-                                  
-                                  {appUser?.role === 'admin' && (
-                                     <button onClick={() => handleRowAction('delete', row)} className="flex-1 py-2.5 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Trash2 className="w-4 h-4"/> Hapus</button>
-                                  )}
-                               </>
-                            )}
+                            <div className="p-4 flex flex-wrap gap-2">
+                               {appUser?.role !== 'jemaat' ? (
+                                  <button onClick={() => handleRowAction('print_kk', row)} className="flex-1 py-2.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Printer className="w-4 h-4"/> Cetak KK</button>
+                               ) : (
+                                  <button onClick={() => handleRowAction('view', row)} className="flex-1 py-2.5 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Eye className="w-4 h-4"/> Detail</button>
+                               )}
+                               
+                               {/* Akses Edit Khusus Admin & Penatua Rayon Tersebut */}
+                               {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && penatuaMap[row?.noRayon] === appUser?.name)) && (
+                                  <>
+                                     <button onClick={() => handleRowAction('add_member', row)} className="w-full py-2.5 bg-green-100 text-green-700 hover:bg-green-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><UserPlus className="w-4 h-4"/> Tambah Anggota ke KK ini</button>
+                                     <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit KK</button>
+                                     {appUser?.role === 'admin' && (
+                                        <button onClick={() => handleRowAction('delete', row)} className="flex-1 py-2.5 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Trash2 className="w-4 h-4"/> Hapus</button>
+                                     )}
+                                  </>
+                               )}
+                            </div>
                          </div>
                       )}
-                   </div>
+                      </div>
                 ))
              )}
           </div>

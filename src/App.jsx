@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { RefreshCw, X, Upload, Printer, ArrowLeft, History, ChevronUp, ChevronDown, ArrowUpDown, Trash2, Edit, Plus, Camera, Eye, LogOut, Gift, MoreVertical } from 'lucide-react';
+import { RefreshCw, X, Upload, Printer, ArrowLeft, History, ChevronUp, ChevronDown, ChevronRight, ArrowUpDown, Trash2, Edit, Plus, Camera, Eye, LogOut, Gift, MoreVertical } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { initializeFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, setDoc, getDocs } from 'firebase/firestore';
@@ -80,7 +80,7 @@ const StatCard = ({ title, val1, val2, label1, label2, color }) => (
   </div>
 );
 
-function FormInput({ label, name, value, onChange, type="text", req=false, dis=false, opts=null, span=1, isCheckboxGroup=false, onCheckboxChange }) {
+function FormInput({ label, name, value, onChange, type="text", req=false, dis=false, opts=null, span=1, isCheckboxGroup=false, onCheckboxChange, list }) {
   const cls = `w-full border p-2 rounded bg-white text-sm focus:ring-2 outline-none ${dis ? 'bg-gray-200 opacity-70 cursor-not-allowed' : ''}`;
   if (isCheckboxGroup) {
      return (
@@ -107,7 +107,7 @@ function FormInput({ label, name, value, onChange, type="text", req=false, dis=f
             <option value="">-Pilih-</option>{opts.map(o=><option key={o} value={o}>{o}</option>)}
          </select>
       ) : (
-         <input type={type} name={name} value={type==='date'?toInputDate(value):value||''} onChange={onChange} disabled={dis} className={cls} required={req} maxLength={name==='nik'?16:undefined} placeholder={label}/>
+         <input type={type} name={name} list={list} value={type==='date'?toInputDate(value):value||''} onChange={onChange} disabled={dis} className={cls} required={req} maxLength={name==='nik'?16:undefined} placeholder={label}/>
       )}
     </div>
   );
@@ -118,7 +118,8 @@ function InfografisTab({ data, filterRayon, type }) {
   if (type === 'majelis') {
      const countStats = (jabatan) => {
         const d = dAktif.filter(x => String(x.jabatanPelayanan).toLowerCase() === jabatan.toLowerCase());
-        const l = d.filter(x => isL(x.jk)).length; const p = d.filter(x => isP(x.jk)).length;
+        const l = d.filter(x => isL(x.jk) || String(x.jk||'').toLowerCase().startsWith('l')).length; 
+        const p = d.filter(x => isP(x.jk) || String(x.jk||'').toLowerCase().startsWith('p')).length;
         return { l, p, t: l + p };
      };
      const sPen = countStats('Penatua'); const sDia = countStats('Diaken');
@@ -181,20 +182,44 @@ function InfografisTab({ data, filterRayon, type }) {
   );
 }
 
-const BarisTabelJemaat = React.memo(({ row, idx, startIndex, tabCols, activeTab, activeSubTabStatus, appUser, isEditable, onAction }) => {
+// KODE BARU: Ganti seluruh komponen BarisTabelJemaat lama di App.jsx dengan ini
+const BarisTabelJemaat = React.memo(({ row, idx, startIndex, tabCols, activeTab, activeSubTabStatus, appUser, isEditable, onAction, jemaatData }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
-    <tr className="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
-       <td className="px-4 py-4 text-center font-bold text-gray-400">{startIndex + idx + 1}</td>
-       {tabCols.map((c, j) => <td key={`${row.dbId}-${j}`} className="px-4 py-4">{c.fmt ? c.fmt(row[c.k], row) : safeStr(row[c.k])}</td>)}
-       {activeTab !== 'Riwayat Sistem' && (
+    <React.Fragment>
+      <tr className="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
+         {/* 1. Kolom Nomor */}
+         <td className="px-4 py-4 text-center font-bold text-gray-400">
+           {startIndex + idx + 1}
+         </td>
+
+         {/* 2. Kolom Render Data Pokok (Pastikan HANYA ADA SATU tabCols.map) */}
+         {tabCols.map((c, j) => (
+           <td key={`${row.dbId}-${j}`} className="px-4 py-4">
+             {activeTab === 'Data KK' && c.k === 'kepalaKeluarga' ? (
+                <div className="flex items-center justify-between gap-2">
+                   <span>{c.fmt ? c.fmt(row[c.k], row) : safeStr(row[c.k])}</span>
+                   <button type="button" onClick={() => setIsExpanded(!isExpanded)} className="p-1 text-blue-600 hover:bg-blue-100 rounded-full transition-colors shadow-sm bg-blue-50 border border-blue-100">
+                     {isExpanded ? <ChevronDown className="w-4 h-4"/> : <ChevronRight className="w-4 h-4"/>}
+                   </button>
+                </div>
+             ) : (
+                c.fmt ? c.fmt(row[c.k], row) : safeStr(row[c.k])
+             )}
+           </td>
+         ))}
+
+         {/* 3. Kolom Tombol Aksi */}
+         {activeTab !== 'Riwayat Sistem' && (
           <td className="px-4 py-3 text-center flex items-center justify-center gap-1.5 sticky right-0 bg-white/95 backdrop-blur shadow-[-4px_0_10px_-5px_rgba(0,0,0,0.05)] h-full">
-             {activeTab === 'Status Jemaat' ? (
+              {activeTab === 'Status Jemaat' ? (
                 <div className="flex flex-col gap-1 w-full">
                    {['Data Kematian', 'Pindah Jemaat', 'Pindah Masuk Jemaat'].includes(activeSubTabStatus) && (
                       <>
                          <button onClick={() => onAction('view', row)} className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition flex items-center justify-center gap-1 w-full text-xs font-bold" title="Lihat Detail"><Eye className="w-3 h-3" /> Detail</button>
                          {(appUser?.role === 'admin' && activeSubTabStatus !== 'Pindah Masuk Jemaat') && <button onClick={() => onAction('restore', row)} className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition flex items-center justify-center gap-1 w-full text-xs font-bold"><RefreshCw className="w-3 h-3" /> Tarik</button>}
-                          {appUser?.role === 'admin' && (
+                         {appUser?.role === 'admin' && (
                             <button onClick={() => onAction('delete', row)} className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition flex items-center justify-center gap-1 w-full text-xs font-bold" title="Hapus Permanen"><Trash2 className="w-3 h-3" /> Hapus</button>
                          )}
                       </>
@@ -215,14 +240,38 @@ const BarisTabelJemaat = React.memo(({ row, idx, startIndex, tabCols, activeTab,
                    {activeTab === 'Profil Majelis' && <button onClick={() => onAction('print_majelis', row)} className="p-2 ml-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-black text-xs flex items-center transition" title="Cetak"><Printer className="w-4 h-4"/></button>}
                 </>
              ) : (
-                appUser?.role === 'jemaat' ? <span className="text-[10px] bg-gray-100 text-gray-500 font-bold px-3 py-1.5 rounded-lg select-none">Hanya Lihat</span> :
-                (activeTab === 'Data KK' ? <button onClick={() => onAction('print_kk', row)} className="p-1.5 ml-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-black text-xs flex items-center transition"><Printer className="w-3 h-3 inline mr-1"/> Cetak KK</button>
-                : activeTab === 'Profil Majelis' ? <button onClick={() => onAction('print_majelis', row)} className="p-1.5 ml-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-black text-xs flex items-center transition"><Printer className="w-3 h-3 inline mr-1"/> Cetak Profil</button>
-                : <span className="text-[10px] bg-gray-100 text-gray-400 font-bold px-2 py-1 rounded">Locked</span>)
+                appUser?.role === 'jemaat' ? (
+                   <button onClick={() => onAction('view', row)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition font-bold text-xs flex items-center justify-center gap-1 w-full"><Eye className="w-3 h-3"/> Detail</button>
+                ) : (
+                   activeTab === 'Data KK' ? <button onClick={() => onAction('print_kk', row)} className="p-1.5 ml-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-black text-xs flex items-center transition"><Printer className="w-3 h-3 inline mr-1"/> Cetak KK</button>
+                   : activeTab === 'Profil Majelis' ? <button onClick={() => onAction('print_majelis', row)} className="p-1.5 ml-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg font-black text-xs flex items-center transition"><Printer className="w-3 h-3 inline mr-1"/> Cetak Profil</button>
+                   : <span className="text-[10px] bg-gray-100 text-gray-400 font-bold px-2 py-1 rounded">Locked</span>
+                )
              )}
           </td>
-       )}
-    </tr>
+         )}
+      </tr>
+
+      {/* Baris Ekspansi Anggota Keluarga Dalam Satu KK (Desktop) - URUT BERDASARKAN NO ANGGOTA */}
+      {isExpanded && activeTab === 'Data KK' && jemaatData && (
+        <tr className="bg-gray-50 border-b border-gray-200">
+          <td colSpan={tabCols.length + 2} className="p-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm pl-10">
+                {jemaatData
+                   .filter(d => d.idKk === row.idKk && d.statusKeanggotaan !== 'Meninggal' && d.statusKeanggotaan !== 'Pindah')
+                   .sort((a,b) => parseInt(a.noAnggota || 99) - parseInt(b.noAnggota || 99))
+                   .map((anggota, i) => (
+                  <div key={anggota.dbId} className="flex gap-2 items-center border-b pb-1">
+                    <span className="font-bold w-4">{i+1}.</span>
+                    <span className="font-semibold text-gray-800">{anggota.namaLengkap}</span>
+                    <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">{anggota.statusKeluarga}</span>
+                  </div>
+                ))}
+             </div>
+          </td>
+        </tr>
+      )}
+    </React.Fragment>
   );
 });
 
@@ -267,6 +316,19 @@ export default function App() {
   const [auditRayon, setAuditRayon] = useState('Semua');
 
   const showAlert = (title, message) => setAlertDialog({ isOpen: true, title, message });
+
+  // KODE BARU (Tambahkan state dan ref ini)
+  const mobileMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setShowMobileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -563,20 +625,46 @@ export default function App() {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     let updates = { [name]: value };
+
+    // 1. GLOBAL: Jika mengubah noRayon, otomatis set nama penatua
+    if (name === 'noRayon') {
+       updates.penatua = penatuaMap[value] || '';
+    }
+
+    // 2. AUTOFILL MAJELIS DARI DATA JEMAAT
+    if ((modalMode === 'addMajelis' || modalMode === 'editMajelis') && name === 'namaLengkap') {
+       const foundJemaat = jemaatData.find(d => d.namaLengkap === value);
+       if (foundJemaat) {
+          updates.tempatLahir = foundJemaat.tempatLahir || '';
+          updates.tanggalLahir = foundJemaat.tanggalLahir || '';
+          updates.jk = foundJemaat.jk || '';
+          updates.goldar = foundJemaat.goldar || '';
+          updates.pekerjaan = foundJemaat.pekerjaan || '';
+          updates.noRayon = foundJemaat.noRayon || '';
+          updates.penatua = penatuaMap[foundJemaat.noRayon] || ''; // Otomatis isi penatua jika rayon ikut terisi
+       }
+    }
+
+    // 3. GENERATOR ID KEPALA KELUARGA (KK)
     if (modalMode === 'addKk' || modalMode === 'editKk') {
       const ry = name === 'noRayon' ? value : formData.noRayon, ur = name === 'urutanKk' ? value : formData.urutanKk;
       if(ry && ur) updates.idKk = `KK${pad0(ry)}${pad0(ur)}`;
-      if (name === 'noRayon' && penatuaMap[value]) updates.penatua = penatuaMap[value];
     }
+
+    // 4. GENERATOR ID ANGGOTA JEMAAT
     if (modalMode === 'addJemaat' || modalMode === 'addAnggota' || modalMode === 'editJemaat') {
       const ry = name === 'noRayon' ? value : formData.noRayon, ur = name === 'urutanKk' ? value : formData.urutanKk, ag = name === 'noAnggota' ? value : formData.noAnggota;
       if(ry && ur && ag) updates.idJemaat = `AG${pad0(ry)}${pad0(ur)}${pad0(ag)}`;
     }
+
+    // 5. RESET FIELD BERSYARAT (Kondisional)
     if (name === 'baptis' && value === 'Belum') updates = { ...updates, gerejaBaptis: '', tanggalBaptis: '', pendetaBaptis: '' };
     if (name === 'sidi' && value === 'Belum') updates = { ...updates, gerejaSidi: '', tanggalSidi: '', pendetaSidi: '' };
     if (name === 'nikah' && value === 'Belum') updates = { ...updates, gerejaNikah: '', tanggalNikah: '', pendetaNikah: '', jenisNikah: [] };
     if (name === 'asuransi' && value === 'Tidak') updates = { ...updates, jaminan: '' };
     if (name === 'disabilitas' && value === 'Tidak') updates = { ...updates, jenisDisabilitas: '' };
+    
+    // Simpan semua pembaruan ke dalam state
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
@@ -612,7 +700,17 @@ export default function App() {
       if (activeSubTabStatus === 'Pasangan Belum Menikah') return [{l:'Nama Lengkap',k:'namaLengkap', fmt:v=><span className="font-bold text-slate-700">{v}</span>},{l:'L/P',k:'jk', fmt:lp},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Rayon',k:'noRayon', fmt:r}];
       if (activeSubTabStatus === 'Ulang Tahun' || activeSubTabStatus === 'Pelayanan Kategori') return [{l:'Nama Lengkap',k:'namaLengkap', fmt: activeSubTabStatus === 'Ulang Tahun' ? v=><span className="font-black text-pink-700 flex items-center gap-2">{v} <Gift className="w-4 h-4 inline"/></span> : bld},{l:'L/P',k:'jk', fmt:lp},{l:'Tanggal Lahir',k:'tanggalLahir', fmt:toDisplayDate},{l:'Usia',k:'tanggalLahir', fmt:v=><span className="font-black text-teal-700 text-lg">{calculateAge(v)}</span>},{l:'Rayon',k:'noRayon', fmt:r}];
     }
-    if (activeTab === 'Profil Majelis') return [{l:'Foto', k:'fotoBase64', fmt:v=>v?<img src={v} className="w-10 h-10 rounded-full object-cover shadow border border-gray-200" alt="foto"/>:<span className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-xs text-gray-400 border border-gray-200">?</span>}, {l:'Nama Lengkap', k:'namaLengkap', fmt:bld}, {l:'Rayon', k:'noRayon', fmt:r}, {l:'Jabatan', k:'jabatanPelayanan', fmt:v=><span className="text-purple-700 font-black">{v}</span>}, {l:'L/P', k:'jk', fmt:lp}, {l:'Pekerjaan', k:'pekerjaan'}];
+    if (activeTab === 'Profil Majelis') return [
+        {l:'Foto', k:'fotoBase64', fmt:v=>v?<img src={v} className="w-10 h-10 rounded-full object-cover shadow border border-gray-200" alt="foto"/>:<span className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-xs text-gray-400 border border-gray-200">?</span>}, 
+        {l:'Nama Lengkap', k:'namaLengkap', fmt:(v, row) => {
+          const isPurna = row.tglAkhirPelayanan && new Date() > new Date(row.tglAkhirPelayanan);
+          return <div><span className="font-bold">{v}</span> {isPurna && <span className="ml-2 bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Purna Tugas</span>}</div>;
+        }}, 
+        {l:'Rayon', k:'noRayon', fmt:r}, 
+        {l:'Jabatan', k:'jabatanPelayanan', fmt:v=><span className="text-purple-700 font-black">{v}</span>}, 
+        {l:'Masa Bakti', k:'tglAkhirPelayanan', fmt:(v, row)=> row.tglMulaiPelayanan ? `${new Date(row.tglMulaiPelayanan).getFullYear()} - ${v ? new Date(v).getFullYear() : 'Seterusnya'}` : '-'},
+        {l:'L/P', k:'jk', fmt:lp}
+      ];
     if (activeTab === 'Riwayat Sistem') return [{l:'Waktu',k:'timestamp', fmt:v=>new Date(v).toLocaleString('id-ID')},{l:'User',k:'user', fmt:bld}, {l:'Aksi',k:'action', fmt:v=><span className={`px-2 py-1 rounded text-xs font-bold text-white ${v==='TAMBAH'?'bg-green-500':v==='EDIT'?'bg-blue-500':v==='RESTORE'?'bg-indigo-500':v==='HAPUS SEMUA'?'bg-red-700':v==='IMPORT'?'bg-amber-500':'bg-red-500'}`}>{v}</span>}, {l:'Data Target',k:'target', fmt:(v,row)=>`${v} (${row.collection})`}];
     return [];
   };
@@ -621,6 +719,7 @@ export default function App() {
 
   const filteredData = useMemo(() => {
     let d = []; const isActive = x => x?.statusKeanggotaan !== 'Meninggal' && x?.statusKeanggotaan !== 'Pindah' && x?.statusHidup !== 'Meninggal';
+    
     if (activeTab === 'Data KK') d = jemaatData.filter(x => x?.statusKeluarga === 'Kepala Keluarga' && isActive(x));
     else if (activeTab === 'Data Jemaat') d = jemaatData.filter(isActive);
     else if (activeTab === 'Profil Majelis') d = [...majelisData];
@@ -638,7 +737,11 @@ export default function App() {
     else if (activeTab === 'Riwayat Sistem') d = filterHistoryAction !== 'Semua' ? historyData.filter(x => x?.action === filterHistoryAction) : [...historyData];
 
     if (activeTab !== 'Riwayat Sistem' && activeTab !== 'Pengaturan' && filterRayon !== 'Semua') d = d.filter(x => String(x?.noRayon) === filterRayon);
-    if (searchTerm) { const ls = searchTerm.toLowerCase(); d = d.filter(x => Object.values(x).some(v => typeof v === 'string' && v.toLowerCase().includes(ls))); }
+    
+    if (searchTerm) { 
+       const ls = searchTerm.toLowerCase(); 
+       d = d.filter(x => Object.values(x).some(v => typeof v === 'string' && v.toLowerCase().includes(ls)));
+    }
 
     if (sortConfig.key) {
       d.sort((a, b) => {
@@ -651,7 +754,11 @@ export default function App() {
         return 0;
       });
     } else {
-       if (['Data KK', 'Data Jemaat', 'Status Jemaat'].includes(activeTab)) d.sort((a, b) => String(a.idJemaat||a.idKk||'').localeCompare(String(b.idJemaat||b.idKk||'')));
+       if (['Data KK', 'Data Jemaat', 'Status Jemaat'].includes(activeTab)) {
+          d.sort((a, b) => String(a.idJemaat||a.idKk||'').localeCompare(String(b.idJemaat||b.idKk||'')));
+       } else if (activeTab === 'Profil Majelis') {
+          d.sort((a, b) => parseInt(a.noRayon || 0) - parseInt(b.noRayon || 0));
+       }
     }
     return d;
   }, [jemaatData, majelisData, historyData, activeTab, activeSubTabStatus, searchTerm, filterRayon, filterKategori, filterBulan, filterHistoryAction, sortConfig]);
@@ -713,8 +820,8 @@ export default function App() {
   useEffect(() => { setCurrentPage(1); }, [activeTab, activeSubTabStatus, subTabJemaat, subTabMajelis, searchTerm, itemsPerPage, filterRayon, filterKategori, filterBulan, filterHistoryAction]);
 
   const handleRowAction = useCallback((action, row) => {
-     switch(action) {
-        case 'view': setFormData(row); setModalMode('viewJemaat'); break;
+   switch(action) {
+      case 'view': setFormData(row); setModalMode(activeTab === 'Data KK' ? 'viewKk' : activeTab === 'Profil Majelis' ? 'viewMajelis' : 'viewJemaat'); break;
         case 'restore': handleRestoreData(row); break;
         case 'edit': setFormData(row); setModalMode(activeTab === 'Data KK' ? 'editKk' : activeTab === 'Profil Majelis' ? 'editMajelis' : 'editJemaat'); break;
         case 'delete': requestDelete(activeTab === 'Profil Majelis' ? 'majelis' : 'jemaat', row.dbId, row.namaLengkap||row.kepalaKeluarga); break;
@@ -754,7 +861,7 @@ export default function App() {
           {/* Modal Container: Dioptimasi untuk HP dengan w-full max-h-[90vh] */}
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl mt-20 mb-10 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl shrink-0">
-              <h3 className="text-xl font-black text-gray-800">{modalMode === 'warisanKk' ? 'Pewarisan Kepala Keluarga' : modalMode.includes('Kk') ? 'Formulir Kepala Keluarga' : modalMode === 'viewJemaat' ? 'Detail Lengkap Jemaat' : modalMode.includes('Majelis') ? 'Formulir Data Majelis' : 'Formulir Data Jemaat'}</h3>
+              <h3 className="text-xl font-black text-gray-800">{modalMode === 'warisanKk' ? 'Pewarisan Kepala Keluarga' : modalMode === 'viewKk' ? 'Detail Data Kepala Keluarga' : modalMode === 'viewMajelis' ? 'Detail Profil Majelis' : modalMode === 'viewJemaat' ? 'Detail Lengkap Jemaat' : modalMode.includes('Kk') ? 'Formulir Kepala Keluarga' : modalMode.includes('Majelis') ? 'Formulir Data Majelis' : 'Formulir Data Jemaat'}</h3>
               <button type="button" onClick={() => setModalMode('')} className="p-2 hover:bg-gray-200 rounded-full"><X className="w-5 h-5"/></button>
             </div>
             
@@ -779,7 +886,7 @@ export default function App() {
                   <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
                     <h4 className="font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">Data Kepala Keluarga</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormInput req label="Nomor Rayon" name="noRayon" type="select" opts={rayonList} value={formData.noRayon} onChange={handleFormChange} />
+                      <FormInput req label="Nomor Rayon" name="noRayon" type="select" opts={rayonList} value={formData.noRayon} onChange={handleFormChange} dis={appUser?.role === 'penatua'} />
                       <FormInput req label="Urutan KK Ke-" name="urutanKk" type="select" opts={urutanKkOpts} value={formData.urutanKk} onChange={handleFormChange} />
                       <FormInput label="ID KK (Otomatis)" name="idKk" value={formData.idKk} dis span={2} />
                       <FormInput req label="Nama Kepala Keluarga" name="kepalaKeluarga" value={formData.kepalaKeluarga} onChange={handleFormChange} />
@@ -799,7 +906,7 @@ export default function App() {
                           <label className="text-sm font-bold text-blue-900 block mb-2">Saring Berdasarkan Rayon Terlebih Dahulu:</label>
                           <div className="flex flex-col md:flex-row gap-3">
                             <select name="noRayon" value={formData.noRayon || ''} onChange={handleFormChange} className="w-full md:w-1/3 border-2 border-blue-300 p-2.5 rounded-lg bg-white outline-none"><option value="">-- Pilih Rayon --</option>{rayonList.map(r => <option key={r} value={r}>Rayon {r}</option>)}</select>
-                            <select value={formData.idKk || ''} onChange={(e) => { const kk = jemaatData.find(k => String(k?.idKk) === String(e.target.value) && k?.statusKeluarga === 'Kepala Keluarga'); if(kk) { const newIdJemaat = formData.noAnggota ? `AG${pad0(kk.noRayon)}${pad0(kk.urutanKk)}${pad0(formData.noAnggota)}` : formData.idJemaat; setFormData(p => ({...p, idKk: kk.idKk, kepalaKeluarga: kk.kepalaKeluarga, noHp: kk.noHp, bentukRumah: kk.bentukRumah, statusRumah: kk.statusRumah, noRayon: kk.noRayon, urutanKk: kk.urutanKk, penatua: kk.penatua, alamat: kk.alamat, idJemaat: newIdJemaat })); } }} className="w-full md:w-2/3 border-2 border-blue-300 p-2.5 rounded-lg bg-white outline-none disabled:bg-gray-200" disabled={!formData.noRayon} ><option value="">-- Pilih KK --</option>{jemaatData.filter(d => d?.statusKeluarga === 'Kepala Keluarga' && String(d?.noRayon) === String(formData.noRayon) && d?.statusKeanggotaan !== 'Meninggal' && d?.statusKeanggotaan !== 'Pindah').map((k,idx) => <option key={idx} value={k.idKk}>{k.idKk} - {k.kepalaKeluarga}</option>)}</select>
+                            <select value={formData.idKk || ''} onChange={(e) => { const kk = jemaatData.find(k => String(k?.idKk) === String(e.target.value) && k?.statusKeluarga === 'Kepala Keluarga'); if(kk) { const newIdJemaat = formData.noAnggota ? `AG${pad0(kk.noRayon)}${pad0(kk.urutanKk)}${pad0(formData.noAnggota)}` : formData.idJemaat; setFormData(p => ({...p, idKk: kk.idKk, kepalaKeluarga: kk.kepalaKeluarga, noHp: kk.noHp, bentukRumah: kk.bentukRumah, statusRumah: kk.statusRumah, noRayon: kk.noRayon, urutanKk: kk.urutanKk, penatua: kk.penatua, alamat: kk.alamat, idJemaat: newIdJemaat })); } }} className="w-full md:w-2/3 border-2 border-blue-300 p-2.5 rounded-lg bg-white outline-none disabled:bg-gray-200" disabled={!formData.noRayon} ><option value="">-- Pilih KK --</option>{jemaatData.filter(d => d?.statusKeluarga === 'Kepala Keluarga' && String(d?.noRayon) === String(formData.noRayon) && d?.statusKeanggotaan !== 'Meninggal' && d?.statusKeanggotaan !== 'Pindah').sort((a,b) => String(a.idKk).localeCompare(String(b.idKk))).map((k,idx) => <option key={idx} value={k.idKk}>{k.idKk} - {k.kepalaKeluarga}</option>)}</select>
                           </div>
                         </div>
                       )}
@@ -843,14 +950,21 @@ export default function App() {
                       </div>
                       <div className="flex-1 w-full"><label className="block text-sm font-black text-purple-900 mb-2">Upload Foto Profil Majelis</label><input type="file" accept="image/*" onChange={handleImageUpload} className="w-full text-sm file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer border-2 border-purple-200 rounded-xl bg-white p-1"/></div>
                     </div>
+                    {/* Daftar Pencarian Pintar (Datalist) */}
+                    <datalist id="jemaat-names">
+                       {jemaatData.filter(d => d.statusKeanggotaan !== 'Meninggal' && d.statusKeanggotaan !== 'Pindah').map(d => (
+                         <option key={d.dbId} value={d.namaLengkap} />
+                       ))}
+                    </datalist>
+
                     {FORM_MAJELIS.map((sec, i) => (
-                      <React.Fragment key={`sec-${i}`}>
+                       <React.Fragment key={`sec-${i}`}>
                         <h4 className="sm:col-span-2 md:col-span-3 font-black text-gray-800 border-b-2 border-gray-100 pb-2 mt-4 text-lg w-full uppercase">{sec.t}</h4>
                         {sec.f.map((field, idx) => (
-                          <React.Fragment key={`field-${i}-${idx}`}>
-                              {field.t === 'sel' ? <FormInput label={field.l} name={field.k} type="select" opts={field.opts} value={formData[field.k]} onChange={handleFormChange} req={field.req} span={field.span} />
+                           <React.Fragment key={`field-${i}-${idx}`}>
+                              {field.t === 'sel' ? <FormInput label={field.l} name={field.k} type="select" opts={field.k === 'noRayon' ? rayonList : field.opts} value={formData[field.k]} onChange={handleFormChange} req={field.req} span={field.span} />
                               : field.t === 'chk' ? <FormInput label={field.l} name={field.k} isCheckboxGroup opts={field.opts} value={formData[field.k]} onCheckboxChange={handleCheckboxChange} span={field.span} />
-                              : <FormInput type={field.t==='date'?'date':field.t==='num'?'number':'text'} label={field.l} name={field.k} value={formData[field.k]} onChange={handleFormChange} req={field.req} span={field.span} />}
+                              : <FormInput type={field.t==='date'?'date':field.t==='num'?'number':'text'} label={field.l} name={field.k} value={formData[field.k]} onChange={handleFormChange} req={field.req} span={field.span} list={field.k === 'namaLengkap' ? 'jemaat-names' : undefined} />}
                            </React.Fragment>
                         ))}
                       </React.Fragment>
@@ -879,16 +993,40 @@ export default function App() {
                     : ( <><FormInput req type="date" label="Tanggal Kematian" name="tanggalKematian" value={formData.tanggalKematian} onChange={handleFormChange} /><FormInput req type="date" label="Tanggal Penguburan" name="tanggalPenguburan" value={formData.tanggalPenguburan} onChange={handleFormChange} /></> )}
                   </div>
                 )}
-                {modalMode === 'viewJemaat' && (
-                  <div className="p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                     {Object.keys(JEMAAT_HEADER_MAP).filter(h => !['ID KK', 'ID Jemaat', 'No Anggota', 'Urutan KK', 'No Rayon'].includes(h)).map(header => {
+                  {modalMode === 'viewKk' && (
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {['ID KK', 'Kepala Keluarga', 'No Rayon', 'Urutan KK', 'Bentuk Rumah', 'Status Rumah', 'Penatua Rayon', 'Alamat Domisili'].map(header => {
                         const key = JEMAAT_HEADER_MAP[header]; let val = formData[key];
-                         if (['tanggalLahir', 'tanggalBaptis', 'tanggalSidi', 'tanggalNikah', 'tanggalKematian', 'tanggalPenguburan', 'tanggalPindah', 'tanggalMasuk'].includes(key)) val = toDisplayDate(val);
-                         if (Array.isArray(val)) val = val.join(', ');
-                         return ( <div key={key} className="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">{header}</p><p className="font-semibold text-gray-800 text-sm">{safeStr(val) || '-'}</p></div> );
+                        return ( <div key={header} className="bg-blue-50 p-3 rounded-xl border border-blue-100 shadow-sm flex flex-col justify-center"><p className="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">{header}</p><p className="font-semibold text-gray-800 text-sm">{safeStr(val) || '-'}</p></div> );
                      })}
                   </div>
                 )}
+                
+                {modalMode === 'viewMajelis' && (
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {[
+                        { label: 'Jabatan Pelayanan', key: 'jabatanPelayanan' },
+                        { label: 'Nama Lengkap', key: 'namaLengkap' },
+                        { label: 'Tanggal Mulai Pelayanan', key: 'tglMulaiPelayanan', isDate: true },
+                        { label: 'Tanggal Akhir Pelayanan', key: 'tglAkhirPelayanan', isDate: true }
+                     ].map(f => {
+                        let val = formData[f.key];
+                        if (f.isDate) val = toDisplayDate(val);
+                        return ( <div key={f.key} className="bg-purple-50 p-3 rounded-xl border border-purple-100 shadow-sm flex flex-col justify-center"><p className="text-[10px] text-purple-500 font-bold uppercase tracking-wider mb-1">{f.label}</p><p className="font-semibold text-gray-800 text-sm">{safeStr(val) || '-'}</p></div> );
+                     })}
+                  </div>
+                )}
+                
+                {modalMode === 'viewJemaat' && (
+                  <div className="p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                     {Object.keys(JEMAAT_HEADER_MAP).filter(h => !['ID KK', 'ID Jemaat', 'No Anggota', 'Urutan KK', 'No Rayon', 'Pindah Ke Gereja', 'Tanggal Pindah', 'Tanggal Kematian', 'Tanggal Penguburan', 'Asal Jemaat', 'Tanggal Masuk', 'Status Keanggotaan'].includes(h)).map(header => {
+                        const key = JEMAAT_HEADER_MAP[header]; let val = formData[key];
+                         if (['tanggalLahir', 'tanggalBaptis', 'tanggalSidi', 'tanggalNikah', 'tanggalKematian', 'tanggalPenguburan', 'tanggalPindah', 'tanggalMasuk'].includes(key)) val = toDisplayDate(val);
+                         if (Array.isArray(val)) val = val.join(', ');
+                        return ( <div key={header} className="bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center"><p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">{header}</p><p className="font-semibold text-gray-800 text-sm">{safeStr(val) || '-'}</p></div> );
+                     })}
+           </div>
+         )}
               </div>
               <div className="p-5 border-t bg-gray-100 flex justify-end gap-3 rounded-b-2xl shrink-0"><button type="button" onClick={() => setModalMode('')} className="px-5 py-2.5 border rounded-xl text-gray-700 bg-white font-bold shadow-sm">{modalMode === 'viewJemaat' ? 'Tutup' : 'Batal'}</button>{modalMode !== 'viewJemaat' && <button type="submit" className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-md flex items-center gap-2"><Upload className="w-4 h-4"/> Simpan Data</button>}</div>
             </form>
@@ -909,13 +1047,14 @@ export default function App() {
         <header className="sticky top-4 mx-4 mb-6 bg-white/95 backdrop-blur-md rounded-3xl shadow-sm z-40 px-6 py-4 border border-gray-200 flex items-center justify-between print:hidden">
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain bg-white rounded-full p-1 shadow-sm border border-gray-100" />
-            <div>
-              <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight uppercase">
-              Sistem Data {churchProfile?.jemaat || ''}
+            <div className="flex flex-col">
+              <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">{churchProfile?.klasis || 'Klasis Belum Diatur'}</span>
+              <h1 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight uppercase leading-tight mb-1">
+                SISTEM DATA {churchProfile?.jemaat || ''} {churchProfile?.mataJemaat ? `- ${churchProfile?.mataJemaat}` : ''}
               </h1>
-              <div className="text-xs font-bold hidden md:flex flex-col mt-1">
-                <div className="flex items-center gap-1 mb-1 text-blue-600"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> DB Terkoneksi • Akses: <span className="uppercase">{appUser?.role}</span></div>
-                <div className="text-gray-500 text-[10px] leading-tight uppercase">{churchProfile?.klasis || 'GEREJA'}</div>
+              <div className="flex items-center gap-1 text-[10px] md:text-xs font-bold text-blue-600">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> 
+                DB Terkoneksi • Akses: <span className="uppercase">{appUser?.role} {appUser?.role === 'penatua' ? `(${appUser?.name})` : ''}</span>
               </div>
             </div>
           </div>
@@ -934,7 +1073,7 @@ export default function App() {
 
         <main className="px-4 md:px-8 max-w-[98%] mx-auto print:pt-4 print:px-0">
          
-          <div className="flex lg:hidden justify-between items-center bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-gray-200 mb-4 print:hidden relative">
+          <div ref={mobileMenuRef} className="flex lg:hidden justify-between items-center bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-gray-200 mb-4 print:hidden relative">
    <span className="font-black text-blue-800 tracking-wide text-lg">{activeTab}</span>
    <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors">
      <MoreVertical className="w-6 h-6" />
@@ -972,7 +1111,7 @@ export default function App() {
                   />
                ) : activeTab === 'Data KK' ? (
                   <DataKkTab
-                     jemaatData={jemaatData}
+                     jemaatData={jemaatData} penatuaMap={penatuaMap}
                      appUser={appUser} setFormData={setFormData} setModalMode={setModalMode}
                      filterRayon={filterRayon} setFilterRayon={setFilterRayon} rayonList={rayonList}
                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -985,7 +1124,7 @@ export default function App() {
                   />
                ) : activeTab === 'Data Jemaat' ? (
                   <DataJemaatTab
-                     appUser={appUser} setFormData={setFormData} setModalMode={setModalMode}
+                     appUser={appUser} setFormData={setFormData} setModalMode={setModalMode} penatuaMap={penatuaMap}
                      subTabJemaat={subTabJemaat} setSubTabJemaat={setSubTabJemaat}
                      filterRayon={filterRayon} setFilterRayon={setFilterRayon} rayonList={rayonList}
                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -998,9 +1137,9 @@ export default function App() {
                      handleExportCSV={handleExportCSV} handleExportSinode={handleExportSinode} handleCleanAll={handleCleanAll} fileInputRef={fileInputRef}
                      InfografisTab={InfografisTab} jemaatData={jemaatData}
                   />
-               ) : activeTab === 'Profil Majelis' ? (
+              ) : activeTab === 'Profil Majelis' ? (
                   <ProfilMajelisTab
-                     appUser={appUser} setFormData={setFormData} setModalMode={setModalMode}
+                     appUser={appUser} setFormData={setFormData} setModalMode={setModalMode} penatuaMap={penatuaMap}
                      subTabMajelis={subTabMajelis} setSubTabMajelis={setSubTabMajelis}
                      filterRayon={filterRayon} setFilterRayon={setFilterRayon} rayonList={rayonList}
                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}

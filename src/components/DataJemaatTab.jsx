@@ -3,7 +3,7 @@ import { Users, Plus, ChevronDown, Download, FileUp, Trash2, Search, ChevronLeft
 import { calculateAge, toDisplayDate } from '../utils/helpers';
 
 export default function DataJemaatTab({
-  appUser, setFormData, setModalMode,
+  appUser, setFormData, setModalMode, penatuaMap,
   subTabJemaat, setSubTabJemaat,
   filterRayon, setFilterRayon, rayonList,
   searchTerm, setSearchTerm,
@@ -70,7 +70,9 @@ export default function DataJemaatTab({
                               <div className="fixed inset-0 z-40" onClick={() => setShowMenuOps(false)}></div>
                               <div className="absolute left-0 mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
                                  <button onClick={() => { setShowMenuOps(false); handleExportCSV(); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left text-sm font-bold text-gray-700"><Download className="w-4 h-4 text-emerald-600"/> Download Excel Bawaan</button>
-                                 <button onClick={() => { setShowMenuOps(false); handleExportSinode(); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left text-sm font-bold text-gray-700"><Download className="w-4 h-4 text-blue-600"/> Laporan ke Sinode</button>
+                                 <button onClick={handleExportSinode} className="... whitespace-nowrap ...">
+                                 Laporan ke Sinode
+                                 </button>
                                  <button onClick={() => { setShowMenuOps(false); fileInputRef.current.click(); }} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left text-sm font-bold text-gray-700"><FileUp className="w-4 h-4 text-amber-500"/> Import CSV</button>
                                  <div className="h-px bg-gray-100 w-full"></div>
                                  <button onClick={() => { setShowMenuOps(false); handleCleanAll('jemaat'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-left text-sm font-bold text-red-600"><Trash2 className="w-4 h-4"/> Kosongkan Data</button>
@@ -81,24 +83,27 @@ export default function DataJemaatTab({
                 )}
               </div>
 
-              {subTabJemaat !== 'Infografis' && (
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
                   <select value={filterRayon} onChange={(e) => setFilterRayon(e.target.value)} className="bg-blue-50 border-2 border-blue-200 text-blue-800 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
                     <option value="Semua">Semua Rayon</option>
                     {rayonList.map(i => <option key={i} value={i}>Rayon {i}</option>)}
                   </select>
-                  <div className="relative w-full sm:w-auto flex-1">
-                    <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full xl:w-60 pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-700" />
-                  </div>
-                  <select value={itemsPerPage} onChange={(e) => setItemsPerPage(e.target.value === 'Semua' ? 'Semua' : Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
-                    <option value={5}>Tampil 5</option>
-                    <option value={10}>Tampil 10</option>
-                    <option value={20}>Tampil 20</option>
-                    <option value="Semua">Tampil Semua</option>
-                  </select>
-                </div>
-              )}
+
+               {subTabJemaat !== 'Infografis' && (
+                  <>
+                     <div className="relative w-full sm:w-auto flex-1">
+                       <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                       <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full xl:w-60 pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-700" />
+                     </div>
+                     <select value={itemsPerPage} onChange={(e) => setItemsPerPage(e.target.value === 'Semua' ? 'Semua' : Number(e.target.value))} className="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-3 outline-none w-full sm:w-auto shrink-0">
+                       <option value={5}>Tampil 5</option>
+                       <option value={10}>Tampil 10</option>
+                       <option value={20}>Tampil 20</option>
+                       <option value="Semua">Tampil Semua</option>
+                     </select>
+                  </>
+               )}
+              </div>
             </div>
 
             {/* AREA RENDER UTAMA */}
@@ -135,7 +140,7 @@ export default function DataJemaatTab({
                                       startIndex={itemsPerPage === 'Semua' ? 0 : (currentPage - 1) * itemsPerPage}
                                       tabCols={tabCols} activeTab="Data Jemaat"
                                       appUser={appUser} 
-                                      isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && (!row || String(row.noRayon) === appUser.name))}
+                                      isEditable={appUser?.role === 'admin' || (appUser?.role === 'penatua' && penatuaMap[row?.noRayon] === appUser?.name)}
                                       onAction={handleRowAction}
                                    />
                                 ))
@@ -176,7 +181,7 @@ export default function DataJemaatTab({
                                      <div className="bg-blue-50/50 border-t border-gray-100 p-4 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
                                         <button onClick={() => handleRowAction('view', row)} className="flex-1 py-2.5 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Eye className="w-4 h-4"/> Detail</button>
                                         
-                                        {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && String(row.noRayon) === appUser?.name)) && (
+                                        {(appUser?.role === 'admin' || (appUser?.role === 'penatua' && penatuaMap[row?.noRayon] === appUser?.name)) && (
                                            <>
                                               <button onClick={() => handleRowAction('edit', row)} className="flex-1 py-2.5 bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"><Edit className="w-4 h-4"/> Edit</button>
                                               {appUser?.role === 'admin' && (
