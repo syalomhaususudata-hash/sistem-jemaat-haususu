@@ -1136,7 +1136,9 @@ export default function App() {
                      SortableHeader={SortableHeader} BarisTabelJemaat={BarisTabelJemaat} handleRowAction={handleRowAction}
                      handleExportCSV={handleExportCSV} handleExportSinode={handleExportSinode} handleCleanAll={handleCleanAll} fileInputRef={fileInputRef}
                      InfografisTab={InfografisTab} jemaatData={jemaatData}
+                     db={db} // <--- TAMBAHKAN BARIS INI
                   />
+                  
               ) : activeTab === 'Profil Majelis' ? (
                   <ProfilMajelisTab
                      appUser={appUser} setFormData={setFormData} setModalMode={setModalMode} penatuaMap={penatuaMap}
