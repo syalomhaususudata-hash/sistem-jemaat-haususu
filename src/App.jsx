@@ -1161,7 +1161,9 @@ export default function App() {
                      filterKategori={filterKategori} setFilterKategori={setFilterKategori} KATEGORI_PELAYANAN={KATEGORI_PELAYANAN}
                      filterBulan={filterBulan} setFilterBulan={setFilterBulan} NAMA_BULAN={NAMA_BULAN}
                      filterRayon={filterRayon} setFilterRayon={setFilterRayon} rayonList={rayonList}
-                     currentData={currentData} tabCols={tabCols} sortConfig={sortConfig} requestSort={requestSort}
+                     currentData={currentData} 
+                     fullFilteredData={filteredData} // <--- TAMBAHKAN BARIS INI (ganti 'filteredData' dengan nama variabel utuh di App.jsx Anda)
+                     tabCols={tabCols} sortConfig={sortConfig} requestSort={requestSort}
                      itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage}
                      currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} totalItems={totalItems}
                      churchProfile={churchProfile}

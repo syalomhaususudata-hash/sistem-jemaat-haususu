@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronDown, Plus, Printer, ChevronLeft, ChevronRight, Users, Filter, Eye, RefreshCw, Trash2 } from 'lucide-react';
+import { ChevronDown, Plus, Printer, ChevronLeft, ChevronRight, Users, Filter, Eye, RefreshCw, Trash2, Download } from 'lucide-react';
 import { calculateAge, toDisplayDate } from '../utils/helpers';
+import * as XLSX from 'xlsx'; // Tambahkan library ini untuk fungsi Excel
 
 export default function StatusJemaatTab({
   activeSubTabStatus, setActiveSubTabStatus,
@@ -8,7 +9,9 @@ export default function StatusJemaatTab({
   filterKategori, setFilterKategori, KATEGORI_PELAYANAN,
   filterBulan, setFilterBulan, NAMA_BULAN,
   filterRayon, setFilterRayon, rayonList,
-  currentData, tabCols, sortConfig, requestSort,
+  currentData, fullFilteredData, // <--- TAMBAHKAN DI SINI
+  tabCols, sortConfig, requestSort,
+  // ...
   itemsPerPage, setItemsPerPage,
   currentPage, totalPages, setCurrentPage, totalItems,
   churchProfile,
@@ -24,12 +27,69 @@ export default function StatusJemaatTab({
     if (activeSubTabStatus === 'Anggota Baptis') return `Tgl Baptis: ${toDisplayDate(row.tanggalBaptis)}`;
     if (activeSubTabStatus === 'Anggota Sidi') return `Tgl Sidi: ${toDisplayDate(row.tanggalSidi)}`;
     if (activeSubTabStatus === 'Anggota Nikah') return `Tgl Nikah: ${toDisplayDate(row.tanggalNikah)}`;
-    if (activeSubTabStatus === 'Ulang Tahun') return `Tgl Lahir: ${toDisplayDate(row.tanggalLahir)} • Usia: ${calculateAge(row.tanggalLahir)} Thn`;
-    if (activeSubTabStatus === 'Pelayanan Kategori') return `Usia: ${calculateAge(row.tanggalLahir)} Thn`;
-    return `Tgl Lahir: ${toDisplayDate(row.tanggalLahir)}`;
+    
+    // ---> PERBAIKAN: Tambahkan Pengecekan !row.tanggalLahir <---
+    if (activeSubTabStatus === 'Ulang Tahun') {
+      if (!row.tanggalLahir) return 'Tgl Lahir: Belum didata • Usia: - Thn';
+      return `Tgl Lahir: ${toDisplayDate(row.tanggalLahir)} • Usia: ${calculateAge(row.tanggalLahir)} Thn`;
+    }
+    
+    if (activeSubTabStatus === 'Pelayanan Kategori') {
+      if (!row.tanggalLahir) return 'Usia: - Thn';
+      return `Usia: ${calculateAge(row.tanggalLahir)} Thn`;
+    }
+    
+    return `Tgl Lahir: ${row.tanggalLahir ? toDisplayDate(row.tanggalLahir) : 'Belum didata'}`;
   };
 
   const isActionableStatus = ['Data Kematian', 'Pindah Jemaat', 'Pindah Masuk Jemaat'].includes(activeSubTabStatus);
+
+const handleDownloadExcel = () => {
+    // 1. Ambil data utuh jika tersedia dari App.jsx, jika tidak fallback ke currentData
+    const sumberData = fullFilteredData ? fullFilteredData : currentData;
+    let dataUlangTahun = [...sumberData];
+
+    // 2. Pengurutan (Sorting): Berdasarkan Tanggal (Hari 1 s/d 31)
+    dataUlangTahun.sort((a, b) => {
+      // Amankan jika ada data jemaat yang tanggal lahirnya kosong
+      if (!a.tanggalLahir) return 1; 
+      if (!b.tanggalLahir) return -1;
+
+      // Ambil angka harinya saja (1-31) untuk diurutkan
+      const hariA = new Date(a.tanggalLahir).getDate();
+      const hariB = new Date(b.tanggalLahir).getDate();
+      
+      // Jika Anda ingin mengurutkan berdasarkan UMUR (Tahun Lama ke Baru), 
+      // hapus .getDate() di atas, dan gunakan:
+      // return new Date(a.tanggalLahir) - new Date(b.tanggalLahir);
+      
+      return hariA - hariB; 
+    });
+
+    // 3. Format Data: Hanya Nama dan Tanggal (YYYY/MM/DD)
+    const excelData = dataUlangTahun.map(row => {
+      if (!row.tanggalLahir) {
+         return { "Nama": row.namaLengkap, "Tanggal": "Belum didata" };
+      }
+
+      const dateObj = new Date(row.tanggalLahir);
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+
+      return {
+        "Nama": row.namaLengkap,
+        "Tanggal": `${yyyy}/${mm}/${dd}`
+      };
+    });
+
+    // 4. Proses konversi ke Excel dan Trigger Download
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ulang Tahun");
+    
+    XLSX.writeFile(workbook, "Data_Ulang_Tahun_Bulan_Ini.xlsx");
+  };
 
   return (
     <div className="animate-in fade-in duration-300">
@@ -74,6 +134,14 @@ export default function StatusJemaatTab({
                 <Plus className="w-4 h-4"/> Lapor Pindah Masuk
               </button>
             )}
+
+            {/* ---> TAMBAHAN BARU: Tombol Download Excel khusus Ulang Tahun <--- */}
+            {activeSubTabStatus === 'Ulang Tahun' && appUser?.role !== 'jemaat' && (
+              <button onClick={handleDownloadExcel} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md active:scale-95 transition">
+                <Download className="w-4 h-4"/> Download Excel
+              </button>
+            )}
+     
             {appUser?.role !== 'jemaat' && (
               <button onClick={() => setPrintMode('list')} className="flex items-center gap-2 bg-indigo-50 border-2 border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-xl text-sm font-bold transition hover:bg-indigo-100">
                 <Printer className="w-4 h-4"/> Cetak Laporan
@@ -111,7 +179,7 @@ export default function StatusJemaatTab({
              <h1 className="text-2xl font-bold uppercase text-center">Data {activeSubTabStatus}</h1>
              <p className="text-center font-bold text-sm mt-1">
                {activeSubTabStatus === 'Pelayanan Kategori' ? `Kategori: ${filterKategori} | ` : ''}
-               {activeSubTabStatus === 'Ulang Tahun' ? `Bulan: ${NAMA_BULAN[filterBulan-1]} | ` : ''}
+               {activeSubTabStatus === 'Ulang Tahun' ? `Bulan: ${NAMA_BULAN ? NAMA_BULAN[filterBulan-1] : 'Memuat...'} | ` : ''}
                Rayon: {filterRayon}
              </p>
              <p className="text-center font-medium text-sm">Jemaat {churchProfile?.jemaat}</p>
